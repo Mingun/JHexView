@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>ru.mingun</groupId>
+  <artifactId>JHexView</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <licenses>
+    <license>
+      <name>GPL-2.0</name>
+      <url>https://opensource.org/licenses/GPL-2.0</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:git://github.com/Mingun/JHexView.git</connection>
+    <developerConnection>scm:git:ssh://github.com:Mingun/JHexView.git</developerConnection>
+    <url>https://github.com/Mingun/JHexView/tree/master</url>
+  </scm>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+</project>
