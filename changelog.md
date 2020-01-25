@@ -1,3 +1,8 @@
+v1.1
+====
+- Split enabled and editable states: add `isEditable`/`setEditable` methods
+- Now component is created in enabled, but not editable state
+
 v1.0
 ====
 First maven release

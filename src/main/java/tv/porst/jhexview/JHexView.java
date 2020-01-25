@@ -79,6 +79,7 @@ import tv.porst.splib.gui.caret.JCaret;
  */
 public final class JHexView extends JComponent
 {
+  //<editor-fold defaultstate="collapsed" desc="Fields">
   private static final long serialVersionUID = -2402458562501988128L;
 
   /**
@@ -279,6 +280,11 @@ public final class JHexView extends JComponent
    * Last y-coordinate of the mouse cursor in the component.
    */
   private int m_lastMouseY = 0;
+
+  /**
+   * Flag that determines whether the component reacts to user input or not.
+   */
+  private boolean editable = false;
 
   /**
    * Blinking caret of the component.
@@ -509,6 +515,7 @@ public final class JHexView extends JComponent
    * Determines whether the bytes inside a column are flipped or not.
    */
   private boolean m_flipBytes = false;
+  //</editor-fold>
 
   /**
    * Creates a new hex viewer.
@@ -544,11 +551,9 @@ public final class JHexView extends JComponent
     setScrollBarMaximum();
 
     updateOffsetViewWidth();
-
-    // By default, this component is disabled.
-    setEnabled(false);
   }
 
+  //<editor-fold defaultstate="collapsed" desc="Private">
   /**
    * Calculates current character and row sizes.
    */
@@ -855,7 +860,7 @@ public final class JHexView extends JComponent
    */
   private void drawCaret(final Graphics g)
   {
-    if (!isEnabled()) {
+    if (!isEditable()) {
       return;
     }
 
@@ -2199,6 +2204,7 @@ public final class JHexView extends JComponent
     setPreferredSize(new Dimension(width, getHeight()));
     revalidate();
   }
+  //</editor-fold>
 
   /**
    * Paints the hex window.
@@ -2863,6 +2869,34 @@ public final class JHexView extends JComponent
   public boolean isColorMapEnabled()
   {
     return m_colorMapEnabled;
+  }
+
+  /**
+   * Returns the boolean indicating whether this component is editable or not.
+   *
+   * @return {@code true}, if contents of this component can be changed by user.
+   *         {@code false}, otherwise.
+   *
+   * @see #setEditable
+   */
+  public boolean isEditable() { return editable; }
+  /**
+   * Sets the specified boolean to indicate whether or not this component should
+   * be editable.
+   * A PropertyChange event ("editable") is fired when the state is changed.
+   *
+   * @param editable {@code true}, to allow user change content of this element.
+   *
+   * @see #isEditable
+   */
+  public void setEditable(boolean editable) {
+    if (editable != this.editable) {
+      final boolean oldVal = this.editable;
+      this.editable = editable;
+      enableInputMethods(editable);
+      firePropertyChange("editable", Boolean.valueOf(oldVal), Boolean.valueOf(editable));
+      repaint();
+    }
   }
 
   /**
@@ -4315,7 +4349,7 @@ public final class JHexView extends JComponent
     @Override
     public void keyPressed(final KeyEvent event)
     {
-      if (!isEnabled()) {
+      if (!isEditable()) {
         return;
       }
 
