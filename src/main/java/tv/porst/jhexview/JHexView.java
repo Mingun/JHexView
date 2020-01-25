@@ -281,11 +281,6 @@ public final class JHexView extends JComponent
   private int m_lastMouseY = 0;
 
   /**
-   * Flag that determines whether the component reacts to user input or not.
-   */
-  private boolean m_enabled = false;
-
-  /**
    * Blinking caret of the component.
    */
   private JCaret m_caret = new JCaret();
@@ -2871,17 +2866,6 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns the status of the component.
-   *
-   * @return True, if the component is enabled. False, otherwise.
-   */
-  @Override
-  public boolean isEnabled()
-  {
-    return m_enabled;
-  }
-
-  /**
    * Returns whether the title header is visible.
    */
   public boolean isHeaderVisible()
@@ -3317,17 +3301,10 @@ public final class JHexView extends JComponent
   @Override
   public void setEnabled(final boolean enabled)
   {
-    if (enabled == m_enabled) {
-      return;
-    }
-
-    this.m_enabled = enabled;
-
-    if (this.m_enabled) {
+    if (enabled && !isEnabled()) {
       setScrollBarMaximum();
     }
-
-    repaint();
+    super.setEnabled(enabled);
   }
 
   public void setFlipBytes(final boolean flip)
