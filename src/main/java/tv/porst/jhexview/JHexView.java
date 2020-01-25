@@ -2295,7 +2295,7 @@ public final class JHexView extends JComponent
   public void addHexListener(final IHexViewListener listener)
   {
     if (listener == null) {
-      throw new NullPointerException("Error: Listener can't be null");
+      throw new NullPointerException("IHexViewListener can't be null");
     }
 
     m_listeners.add(IHexViewListener.class, listener);
@@ -2304,7 +2304,7 @@ public final class JHexView extends JComponent
   public void addUndoableEditListener(UndoableEditListener listener)
   {
     if (listener == null) {
-      throw new NullPointerException("Error: Listener can't be null");
+      throw new NullPointerException("UndoableEditListener can't be null");
     }
 
     m_listeners.add(UndoableEditListener.class, listener);
@@ -2340,15 +2340,16 @@ public final class JHexView extends JComponent
                        final Color bgcolor)
   {
     if (offset < 0) {
-      throw new IllegalArgumentException("Error: Offset can't be negative");
+      throw new IllegalArgumentException("Offset can't be negative: 0x" + Long.toHexString(offset));
     }
 
     if (size <= 0) {
-      throw new IllegalArgumentException("Error: Size must be positive");
+      throw new IllegalArgumentException("Size must be positive: " + size);
     }
 
     if (level < 0 || level >= m_coloredRanges.length) {
-      throw new IllegalArgumentException("Error: Invalid level");
+      throw new IllegalArgumentException("Invalid level: " + level + ", must be in range [0 ;"
+        + m_coloredRanges.length + ")");
     }
 
     m_coloredRanges[level].addRange(new ColoredRange(offset, size, color, bgcolor));
@@ -2850,9 +2851,11 @@ public final class JHexView extends JComponent
     }
 
     final long realOffset = offset - m_baseAddress;
+    final long end = m_dataProvider.getDataLength();
 
-    if (realOffset < 0 || realOffset >= m_dataProvider.getDataLength()) {
-      throw new IllegalArgumentException("Error: Invalid offset");
+    if (realOffset < 0 || realOffset >= end) {
+      throw new IllegalArgumentException("Invalid offset 0x" + Long.toHexString(realOffset) +
+        ", must be in range [0x0; 0x" + Long.toHexString(end) + "]");
     }
 
     setCurrentPosition(2 * realOffset);
@@ -3141,13 +3144,10 @@ public final class JHexView extends JComponent
    */
   public void setBytesPerColumn(final int bytes)
   {
-    if (bytes <= 0) {
-      throw new IllegalArgumentException("Error: Number of bytes must be positive");
-    }
-
-    if (bytes > m_bytesPerRow) {
-      throw new IllegalArgumentException(
-          "Error: Number of bytes can't be more than the number of bytes per row");
+    if (bytes <= 0 || bytes > m_bytesPerRow) {
+      throw new IllegalArgumentException("Invalid number of bytes per column: " + bytes
+        + ", must be in range [1; " + m_bytesPerRow + "]"
+      );
     }
 
     m_bytesPerColumn = bytes;
@@ -3170,7 +3170,7 @@ public final class JHexView extends JComponent
   public void setBytesPerRow(final int value)
   {
     if (value <= 0) {
-      throw new IllegalArgumentException("Error: Value must be positive");
+      throw new IllegalArgumentException("Bytes per row must be positive: " + value);
     }
 
     m_bytesPerRow = value;
@@ -3222,7 +3222,7 @@ public final class JHexView extends JComponent
   public void setColumnSpacing(final int spacing)
   {
     if (spacing <= 0) {
-      throw new IllegalArgumentException("Error: Spacing must be positive");
+      throw new IllegalArgumentException("Spacing must be positive: " + spacing);
     }
 
     m_columnSpacing = spacing;
@@ -3242,8 +3242,12 @@ public final class JHexView extends JComponent
       return;
     }
 
-    if (offset < getBaseAddress() || offset > getBaseAddress() + m_dataProvider.getDataLength()) {
-      throw new IllegalArgumentException("Error: Invalid offset");
+    final long end  = m_baseAddress + m_dataProvider.getDataLength();
+    if (offset < m_baseAddress || offset > end) {
+      throw new IllegalArgumentException("Invalid offset 0x" + Long.toHexString(offset)
+        + ", must be in range [0x" + Long.toHexString(m_baseAddress)
+        + "; 0x" + Long.toHexString(end) + "]"
+      );
     }
 
     setCurrentPosition(CHARACTERS_PER_BYTE * (offset - m_baseAddress));
@@ -3296,7 +3300,7 @@ public final class JHexView extends JComponent
   public void setDefinitionStatus(final DefinitionStatus status)
   {
     if (status == null) {
-      throw new NullPointerException("Error: Definition status can't be null");
+      throw new NullPointerException("Definition status can't be null");
     }
 
     m_status = status;
@@ -3367,7 +3371,7 @@ public final class JHexView extends JComponent
   public void setFontColorAsciiView(final Color color)
   {
     if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
+      throw new NullPointerException("Font color for ASCII view can't be null");
     }
 
     m_fontColorAscii = color;
@@ -3387,7 +3391,7 @@ public final class JHexView extends JComponent
   public void setFontColorHeader(final Color color)
   {
     if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
+      throw new NullPointerException("Font color for header view can't be null");
     }
 
     m_fontColorHeader = color;
@@ -3407,7 +3411,7 @@ public final class JHexView extends JComponent
   public void setFontColorHexView1(final Color color)
   {
     if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
+      throw new NullPointerException("Font color for even columns can't be null");
     }
 
     m_fontColorHex1 = color;
@@ -3427,7 +3431,7 @@ public final class JHexView extends JComponent
   public void setFontColorHexView2(final Color color)
   {
     if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
+      throw new NullPointerException("Font color for odd columns can't be null");
     }
 
     m_fontColorHex2 = color;
@@ -3447,7 +3451,7 @@ public final class JHexView extends JComponent
   public void setFontColorOffsetView(final Color color)
   {
     if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
+      throw new NullPointerException("Font color for offset view can't be null");
     }
 
     m_fontColorOffsets = color;
@@ -3467,7 +3471,7 @@ public final class JHexView extends JComponent
   public void setFontColorModified(final Color color)
   {
     if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
+      throw new NullPointerException("Font color for modified data can't be null");
     }
 
     m_fontColorModified = color;
@@ -3487,7 +3491,7 @@ public final class JHexView extends JComponent
   public void setFontSize(final int size)
   {
     if (size <= 0) {
-      throw new IllegalArgumentException("Error: Font size must be positive");
+      throw new IllegalArgumentException("Font size must be positive: " + size);
     }
 
     final Font curFont = getFont();
@@ -3549,7 +3553,7 @@ public final class JHexView extends JComponent
   public void setHexViewWidth(final int width)
   {
     if (width <= 0) {
-      throw new IllegalArgumentException("Error: Width must be positive");
+      throw new IllegalArgumentException("Hex view width must be positive: " + width);
     }
 
     m_hexViewWidth = width;
@@ -3593,7 +3597,7 @@ public final class JHexView extends JComponent
   public void setSelectionColor(final Color color)
   {
     if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
+      throw new NullPointerException("Selection color can't be null");
     }
 
     m_selectionColor = color;
@@ -3671,15 +3675,16 @@ public final class JHexView extends JComponent
   public void uncolorize(final int level, final long offset, final int size)
   {
     if (offset < 0) {
-      throw new IllegalArgumentException("Error: Offset can't be negative");
+      throw new IllegalArgumentException("Offset can't be negative: 0x" + Long.toHexString(offset));
     }
 
     if (size <= 0) {
-      throw new IllegalArgumentException("Error: Size must be positive");
+      throw new IllegalArgumentException("Size must be positive: " + size);
     }
 
     if (level < 0 || level >= m_coloredRanges.length) {
-      throw new IllegalArgumentException("Error: Invalid level");
+      throw new IllegalArgumentException("Invalid level: " + level + ", must be in range [0 ;"
+        + m_coloredRanges.length + ")");
     }
 
     m_coloredRanges[level].removeRange(offset, size);
@@ -4020,7 +4025,7 @@ public final class JHexView extends JComponent
     }
   }
 
-  // Represents the undoable edit for a single byte or character.
+  /** Represents the undoable edit for a single byte or character. */
   public class DataEdit extends AbstractEdit
   {
     private final int offset;
