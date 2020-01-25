@@ -1,3 +1,7 @@
+v2.0
+====
+- Remove unused parts of embedded splib library
+
 v1.1
 ====
 - Split enabled and editable states: add `isEditable`/`setEditable` methods
