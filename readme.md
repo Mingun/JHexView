@@ -12,8 +12,6 @@ Hexer that uses this component. You can find the screenshots at
 
 http://www.the-interweb.com/serendipity/index.php?/archives/96-Hexer-1.0.0.html
 
-Dependencies: https://github.com/sporst/splib
-
 Features
 --------
 - Displays binary data in decimal and hexadecimal order
@@ -26,11 +24,3 @@ Features
 - Can work with loaded data or data that must be dynamically loaded from an
   external source
 - Full control over the display colors
-
-Changes for NearInfinity by Argent77
-------------------------------------
-- Included dependencies (splib)
-- Added Apache Ant build script
-- Find bytes/text support
-- Copy/paste support
-- Undo/redo support
