@@ -33,7 +33,7 @@ public interface IDataProvider
    * @param length The length of the requested data in bytes.
    * @return True if the requested data segment is available, false otherwise.
    */
-  boolean hasData(long start, int length);
+  boolean hasData(long offset, int length);
 
   /** Returns whether the data stream provided by this instance is writeable. */
   boolean isEditable();
