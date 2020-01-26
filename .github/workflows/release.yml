@@ -1,0 +1,39 @@
+name: Create and Deploy Release
+
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags: ['v*'] # Push events to matching v*, i.e. v1.0, v20.15.10
+
+jobs:
+  generate:
+    name: Create Release ${{ github.ref }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: ['12.x']
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v1
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Get the version number from tag
+        id: version
+        run: echo ::set-output name=value::${GITHUB_REF#refs/tags/v}
+      - name: Deploy with Maven to GitHub Packages
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn deploy -DPROJECT_VERSION=${{ steps.version.outputs.value }}
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: false
