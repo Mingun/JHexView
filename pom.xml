@@ -33,6 +33,18 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.2.0</version>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <commit>${env.GIT_SHA1}</commit>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
         <version>3.2.1</version>
         <executions>
@@ -69,7 +81,7 @@
     <repository>
       <id>github</id>
       <name>GitHub Action with GITHUB_TOKEN</name>
-      <url>https://maven.pkg.github.com/Mingun/${project.artifactId}</url>
+      <url>https://api.bintray.com/maven/mingun/maven/${project.artifactId}</url>
     </repository>
   </distributionManagement>
 </project>

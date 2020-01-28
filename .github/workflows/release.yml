@@ -22,8 +22,10 @@ jobs:
       - name: Get the version number from tag
         id: version
         run: echo ::set-output name=value::${GITHUB_REF#refs/tags/v}
-      - name: Deploy with Maven to GitHub Packages
+      - name: Deploy with Maven
         env:
+          GIT_SHA1: ${{ github.sha }}
+          # This variables used in GitHub Action maven settings.xml as `username` and `password`
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: mvn deploy -DPROJECT_VERSION=${{ steps.version.outputs.value }}
