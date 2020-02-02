@@ -4039,11 +4039,11 @@ public final class JHexView extends JComponent
   /** Represents the undoable edit for a single byte or character. */
   public class DataEdit extends AbstractEdit
   {
-    private final int offset;
+    private final long offset;
     private final byte oldValue, newValue;
     private final Views view;
 
-    public DataEdit(int offset, byte oldValue, byte newValue, Views view)
+    public DataEdit(long offset, byte oldValue, byte newValue, Views view)
     {
       super("Typing");
       this.offset = offset;
@@ -4203,26 +4203,25 @@ public final class JHexView extends JComponent
 
     private void keyPressedInAsciiView(final KeyEvent event)
     {
-      int offset = (int)getCurrentOffset();
+      if (getSelectionStart() >= m_dataProvider.getDataLength() * 2) {
+        return;
+      }
+      final long offset = getCurrentOffset();
       byte oldValue, newValue;
 
-      final byte[] data = m_dataProvider.getData(getCurrentOffset(), 1);
+      final byte[] data = m_dataProvider.getData(offset, 1);
       if (data == null || data.length == 0) {
         return;
       }
       oldValue = data[0];
 
-      if (getSelectionStart() >= m_dataProvider.getDataLength() * 2) {
-        return;
-      }
-
       data[0] = (byte) event.getKeyChar();
       newValue = data[0];
 
-      m_dataProvider.setData(getCurrentOffset(), data);
+      m_dataProvider.setData(offset, data);
 
       // mark offset as modified
-      setModified(getCurrentOffset());
+      setModified(offset);
 
       // register as undoable action
       fireUndoableEditListener(new DataEdit(offset, oldValue, newValue, getActiveView()));
@@ -4233,26 +4232,26 @@ public final class JHexView extends JComponent
 
     private void keyPressedInHexView(final KeyEvent event)
     {
-      int offset = (int)getCurrentOffset();
+      final int value = Character.digit(event.getKeyChar(), 16);
+
+      if (value == -1) {
+        return;
+      }
+
+      if (getSelectionStart() >= m_dataProvider.getDataLength() * 2) {
+        return;
+      }
+
+      final long offset = getCurrentOffset();
       byte oldValue, newValue;
 
-      final byte[] data = m_dataProvider.getData(getCurrentOffset(), 1);
+      final byte[] data = m_dataProvider.getData(offset, 1);
       if (data == null || data.length == 0) {
         return;
       }
       oldValue = data[0];
 
       final long pos = m_baseAddress + getSelectionStart();
-
-      if (getSelectionStart() >= m_dataProvider.getDataLength() * 2) {
-        return;
-      }
-
-      final int value = Character.digit(event.getKeyChar(), 16);
-
-      if (value == -1) {
-        return;
-      }
 
       if (pos % 2 == 0) {
         data[0] = (byte) (data[0] & 0x0F | value << 4);
@@ -4261,11 +4260,11 @@ public final class JHexView extends JComponent
         data[0] = (byte) (data[0] & 0xF0 | value);
       }
 
-      m_dataProvider.setData(getCurrentOffset(), data);
+      m_dataProvider.setData(offset, data);
       newValue = data[0];
 
       // mark offset as modified
-      setModified(getCurrentOffset());
+      setModified(offset);
 
       // register as undoable action
       fireUndoableEditListener(new DataEdit(offset, oldValue, newValue, getActiveView()));

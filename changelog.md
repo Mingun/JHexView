@@ -2,6 +2,7 @@ v1.1
 ====
 - Split enabled and editable states: add `isEditable`/`setEditable` methods
 - Now component is created in enabled, but not editable state
+- Fix not correctly saved Undo data if edit data at offsets more, than 0xFFFFFFFF
 
 v1.0
 ====
