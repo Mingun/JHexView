@@ -42,7 +42,9 @@ public final class ConvertHelpers
    */
   public static boolean isHexCharacter(final char c)
   {
-    return isDecCharacter(c) || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
+    return c >= '0' && c <= '9'
+        || c >= 'a' && c <= 'f'
+        || c >= 'A' && c <= 'F';
   }
 
   /**
