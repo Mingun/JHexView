@@ -789,14 +789,6 @@ public final class JHexView extends JComponent
       }
 
       x += characterWidth;
-
-      if (range != null && range.getStart() + range.getSize() <= currentOffset) {
-        range = findColoredRange(currentOffset);
-
-        if (range != null && currentOffset + bytesToDraw < range.getStart()) {
-          range = null;
-        }
-      }
     }
   }
 
