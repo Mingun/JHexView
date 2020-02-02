@@ -1278,7 +1278,8 @@ public final class JHexView extends JComponent
     if (!caseSensitive) {
       char ch = ConvertHelpers.toChar(value);
       if (ConvertHelpers.isPrintableCharacter(ch)) {
-        return ConvertHelpers.toByte(Character.toLowerCase(ch));
+        final char chLo = Character.toLowerCase(ch);
+        return (byte)(chLo < 0x80 ? chLo : '?');
       }
     }
     return value;
