@@ -710,12 +710,6 @@ public final class JHexView extends JComponent
     long currentOffset = getFirstVisibleOffset();
 
     for (int i = 0; i < bytesToDraw; i++, currentOffset++) {
-      ColoredRange range = findColoredRange(currentOffset);
-
-      if (range != null && currentOffset + bytesToDraw < range.getStart()) {
-        range = null;
-      }
-
       if (i != 0 && i % m_bytesPerRow == 0) {
         // If the end of a row is reached, reset the
         // x-coordinate and increase the y-coordinate.
@@ -733,7 +727,6 @@ public final class JHexView extends JComponent
               + m_bytesPerColumn - (currentOffset % m_bytesPerColumn) - 1 : currentOffset;
 
           if (isSelectedOffset(normalizedOffset)) {
-
             g.setColor(m_selectionColor);
             g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
 
@@ -743,34 +736,35 @@ public final class JHexView extends JComponent
             } else {
               g.setColor(m_fontColorAscii);
             }
-          } else
-          if (range != null && range.containsOffset(currentOffset)) {
-            final Color bgColor = range.getBackgroundColor();
-
-            if (bgColor != null) {
-              g.setColor(bgColor);
-            }
-
-            g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
-            g.setColor(range.getColor());
-          } else
-          if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(b, currentOffset)) {
-            final Color backgroundColor = m_colormap.getBackgroundColor(b, currentOffset);
-            final Color foregroundColor = isShowModified() && isModified(currentOffset)
-              ? m_fontColorModified
-              : m_colormap.getForegroundColor(b, currentOffset);
-
-            if (backgroundColor != null) {
-              g.setColor(backgroundColor);
-              g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
-            }
-
-            if (foregroundColor != null) {
-              g.setColor(foregroundColor);
-            } else {
-              g.setColor(m_fontColorAscii);
-            }
           } else {
+            final ColoredRange range = findColoredRange(currentOffset);
+            if (range != null && currentOffset + bytesToDraw >= range.getStart()) {
+              final Color bgColor = range.getBackgroundColor();
+
+              if (bgColor != null) {
+                g.setColor(bgColor);
+              }
+
+              g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
+              g.setColor(range.getColor());
+            } else
+            if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(b, currentOffset)) {
+              final Color backgroundColor = m_colormap.getBackgroundColor(b, currentOffset);
+              final Color foregroundColor = isShowModified() && isModified(currentOffset)
+                ? m_fontColorModified
+                : m_colormap.getForegroundColor(b, currentOffset);
+
+              if (backgroundColor != null) {
+                g.setColor(backgroundColor);
+                g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
+              }
+
+              if (foregroundColor != null) {
+                g.setColor(foregroundColor);
+              } else {
+                g.setColor(m_fontColorAscii);
+              }
+            } else
             // Choose the right color for the ASCII view
             if (isShowModified() && isModified(currentOffset)) {
               g.setColor(m_fontColorModified);
@@ -778,7 +772,6 @@ public final class JHexView extends JComponent
               g.setColor(m_fontColorAscii);
             }
           }
-
         } else {
           g.setColor(m_disabledColor != m_bgColorAscii ? m_disabledColor : Color.WHITE);
         }
