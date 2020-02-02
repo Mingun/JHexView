@@ -42,6 +42,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.TreeMap;
@@ -107,6 +108,9 @@ public final class JHexView extends JComponent
     "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "DA", "DB", "DC", "DD", "DE", "DF",
     "E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "EA", "EB", "EC", "ED", "EE", "EF",
     "F0", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "FA", "FB", "FC", "FD", "FE", "FF" };
+
+  /** Lookup table for strings for draw byte values in ASCII view. */
+  private static final String[] ASCII_VIEW_TABLE;
 
   private static final int PADDING_OFFSETVIEW = 20;
 
@@ -517,6 +521,19 @@ public final class JHexView extends JComponent
   private boolean m_flipBytes = false;
   //</editor-fold>
 
+  static {
+    // Draw only ASCII symbols (< 0x80), that are not ISO control characters.
+    // ISO Control characters (if assume that `byte` is unsigned):
+    //   (b >= 0x00 && b <= 0x1F) ||
+    //   (b >= 0x7F && b <= 0x9F);
+    // Other bytes drawn as dot
+    ASCII_VIEW_TABLE = new String[256];
+    Arrays.fill(ASCII_VIEW_TABLE, ".");
+    for (int i = 0x20; i < 0x7F; ++i) {
+      ASCII_VIEW_TABLE[i] = String.valueOf((char)i);
+    }
+  }
+
   /**
    * Creates a new hex viewer.
    */
@@ -681,15 +698,12 @@ public final class JHexView extends JComponent
     }
 
     byte[] data = null;
-    char[] chars = null;
     int bytesToDraw;
 
     if (m_status == DefinitionStatus.DEFINED) {
       bytesToDraw = getBytesToDraw();
       data = m_dataProvider.getData(getFirstVisibleOffset(), bytesToDraw);
-      chars = ConvertHelpers.toChar(data);
-    }
-    else {
+    } else {
       bytesToDraw = getMaximumVisibleBytes();
     }
 
@@ -710,13 +724,9 @@ public final class JHexView extends JComponent
       }
 
       if (m_status == DefinitionStatus.DEFINED) {
-        char c = chars[i];
-        c = ConvertHelpers.isPrintableCharacter(c) ? c : '.';
-
-        final String dataString = String.valueOf(c);
+        final byte b = data[i];
 
         if (isEnabled()) {
-          final byte b = data[i];
           // Fixed: Highlighting in debugger memory window is wrong in regards
           // to the endianess selected
           final long normalizedOffset = m_flipBytes ? (currentOffset & -m_bytesPerColumn)
@@ -773,7 +783,7 @@ public final class JHexView extends JComponent
           g.setColor(m_disabledColor != m_bgColorAscii ? m_disabledColor : Color.WHITE);
         }
 
-        g.drawString(dataString, x, y);
+        g.drawString(ASCII_VIEW_TABLE[b & 0xFF], x, y);
       } else {
         g.drawString("?", x, y);
       }
