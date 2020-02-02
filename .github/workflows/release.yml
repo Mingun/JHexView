@@ -26,8 +26,8 @@ jobs:
         env:
           GIT_SHA1: ${{ github.sha }}
           # This variables used in GitHub Action maven settings.xml as `username` and `password`
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: mingun
+          GITHUB_TOKEN: ${{ secrets.BINTRAY_API_KEY }}
         run: mvn deploy -DPROJECT_VERSION=${{ steps.version.outputs.value }}
       - name: Create GitHub Release
         id: create_release
