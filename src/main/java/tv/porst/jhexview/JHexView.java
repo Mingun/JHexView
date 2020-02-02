@@ -4168,21 +4168,16 @@ public final class JHexView extends JComponent
           if (buffer != null && buffer.length > 0) {
             if (hv.getActiveView() == Views.HEX_VIEW) {
               // processing hex view
-              for (int i = 0; i < buffer.length; i++) {
-                sb.append(String.format("%1$02X", buffer[i] & 0xff));
-                if (i+1 < buffer.length) {
-                  sb.append(' ');
-                }
+              for (final byte b : buffer) {
+                sb.append(HEX_BYTES[b & 0xFF]).append(' ');
               }
+              // Remove last space
+              sb.setLength(sb.length() - 1);
             } else {
               // processing ascii view
-              char[] chars = ConvertHelpers.toChar(buffer);
-              for (int i = 0; i < chars.length; i++) {
-                if (!ConvertHelpers.isPrintableCharacter(chars[i])) {
-                  chars[i] = '.';
-                }
+              for (final byte b : buffer) {
+                sb.append(ASCII_VIEW_TABLE[b & 0xFF]);
               }
-              sb.append(chars);
             }
           }
         }
