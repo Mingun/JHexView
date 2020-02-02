@@ -20,19 +20,6 @@ public final class ConvertHelpers
   private static final Charset DEFAULT_CHARSET = Charset.forName("US-ASCII");
 
   /**
-   * Tests whether a given character is a valid decimal character.
-   *
-   * @param c
-   *          The character to test.
-   *
-   * @return True, if the given character is a valid decimal character.
-   */
-  public static boolean isDecCharacter(final char c)
-  {
-    return c >= '0' && c <= '9';
-  }
-
-  /**
    * Tests whether a character is a valid character of a hexadecimal string.
    *
    * @param c
@@ -75,33 +62,12 @@ public final class ConvertHelpers
   }
 
   /**
-   * Converts the character into a byte value, using the specified charset.
-   * @param c The character to convert.
-   * @param cs The Charset used for conversion.
-   * @return The resulting byte value.
-   */
-  public static byte toByte(char c, Charset cs)
-  {
-    return toByte(new char[]{c}, cs)[0];
-  }
-
-  /**
-   * Converts the char array into a byte array, using the locale as defined by the OS.
-   * @param c The char array to convert.
-   * @return The resulting byte array.
-   */
-  public static byte[] toByte(char[] c)
-  {
-    return toByte(c, DEFAULT_CHARSET);
-  }
-
-  /**
    * Converts the char array into a byte array, using the specified charset.
    * @param c The char array to convert.
    * @param cs The Charset used for conversion.
    * @return The resulting byte array.
    */
-  public static byte[] toByte(char[] c, Charset cs)
+  private static byte[] toByte(char[] c, Charset cs)
   {
     if (c != null && c.length > 0) {
       if (cs == null) cs = DEFAULT_CHARSET;
@@ -129,33 +95,12 @@ public final class ConvertHelpers
   }
 
   /**
-   * Converts the byte value into a character representation, using the specified charset.
-   * @param b The byte value to convert.
-   * @param cs The Charset used for conversion.
-   * @return The character representation of the byte value.
-   */
-  public static char toChar(byte b, Charset cs)
-  {
-    return toChar(new byte[]{b}, cs)[0];
-  }
-
-  /**
-   * Converts the byte array into a character array, using the locale as defined by the OS.
-   * @param b The byte array to convert.
-   * @return The resulting char array of the same length as the byte array.
-   */
-  public static char[] toChar(byte[] b)
-  {
-    return toChar(b, DEFAULT_CHARSET);
-  }
-
-  /**
    * Converts the byte array into a character array, using the specified charset.
    * @param b The byte array to convert.
    * @param cs The Charset used for conversion.
    * @return The resulting char array of the same length as the byte array.
    */
-  public static char[] toChar(byte[] b, Charset cs)
+  private static char[] toChar(byte[] b, Charset cs)
   {
     if (b != null && b.length > 0) {
       if (cs == null) cs = DEFAULT_CHARSET;
