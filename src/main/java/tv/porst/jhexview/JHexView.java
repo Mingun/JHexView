@@ -716,6 +716,7 @@ public final class JHexView extends JComponent
         final String dataString = String.valueOf(c);
 
         if (isEnabled()) {
+          final byte b = data[i];
           // Fixed: Highlighting in debugger memory window is wrong in regards
           // to the endianess selected
           final long normalizedOffset = m_flipBytes ? (currentOffset & -m_bytesPerColumn)
@@ -732,8 +733,8 @@ public final class JHexView extends JComponent
             } else {
               g.setColor(m_fontColorAscii);
             }
-          }
-          else if (range != null && range.containsOffset(currentOffset)) {
+          } else
+          if (range != null && range.containsOffset(currentOffset)) {
             final Color bgColor = range.getBackgroundColor();
 
             if (bgColor != null) {
@@ -742,15 +743,12 @@ public final class JHexView extends JComponent
 
             g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
             g.setColor(range.getColor());
-          }
-          else if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(data[i], currentOffset)) {
-            final Color backgroundColor = m_colormap.getBackgroundColor(data[i], currentOffset);
-            final Color foregroundColor;
-            if (isShowModified() && isModified(currentOffset)) {
-              foregroundColor = m_fontColorModified;
-            } else {
-              foregroundColor = m_colormap.getForegroundColor(data[i], currentOffset);
-            }
+          } else
+          if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(b, currentOffset)) {
+            final Color backgroundColor = m_colormap.getBackgroundColor(b, currentOffset);
+            final Color foregroundColor = isShowModified() && isModified(currentOffset)
+              ? m_fontColorModified
+              : m_colormap.getForegroundColor(b, currentOffset);
 
             if (backgroundColor != null) {
               g.setColor(backgroundColor);
@@ -762,8 +760,7 @@ public final class JHexView extends JComponent
             } else {
               g.setColor(m_fontColorAscii);
             }
-          }
-          else {
+          } else {
             // Choose the right color for the ASCII view
             if (isShowModified() && isModified(currentOffset)) {
               g.setColor(m_fontColorModified);
@@ -772,14 +769,12 @@ public final class JHexView extends JComponent
             }
           }
 
-        }
-        else {
+        } else {
           g.setColor(m_disabledColor != m_bgColorAscii ? m_disabledColor : Color.WHITE);
         }
 
         g.drawString(dataString, x, y);
-      }
-      else {
+      } else {
         g.drawString("?", x, y);
       }
 
@@ -1285,7 +1280,7 @@ public final class JHexView extends JComponent
    */
   private byte normalizeByte(byte value, boolean caseSensitive)
   {
-    if (caseSensitive == false) {
+    if (!caseSensitive) {
       char ch = ConvertHelpers.toChar(value);
       if (ConvertHelpers.isPrintableCharacter(ch)) {
         return ConvertHelpers.toByte(Character.toLowerCase(ch));
@@ -3757,7 +3752,7 @@ public final class JHexView extends JComponent
     }
   }
 
-  // Abstract superclass for undoable edits in the JHexView component.
+  /** Abstract superclass for undoable edits in the JHexView component. */
   public abstract class AbstractEdit extends AbstractUndoableEdit
   {
     private final String name;
@@ -4201,23 +4196,21 @@ public final class JHexView extends JComponent
   {
     private boolean mouseButtonPressed = false;
 
-    private void keyPressedInAsciiView(final KeyEvent event)
+    private void keyPressedInAsciiView(char ch)
     {
       if (getSelectionStart() >= m_dataProvider.getDataLength() * 2) {
         return;
       }
       final long offset = getCurrentOffset();
-      byte oldValue, newValue;
 
       final byte[] data = m_dataProvider.getData(offset, 1);
       if (data == null || data.length == 0) {
         return;
       }
-      oldValue = data[0];
+      final byte oldValue = data[0];
+      final byte newValue = (byte) ch;
 
-      data[0] = (byte) event.getKeyChar();
-      newValue = data[0];
-
+      data[0] = newValue;
       m_dataProvider.setData(offset, data);
 
       // mark offset as modified
@@ -4226,13 +4219,12 @@ public final class JHexView extends JComponent
       // register as undoable action
       fireUndoableEditListener(new DataEdit(offset, oldValue, newValue, getActiveView()));
 
-//      setSelectionStart(getSelectionStart() + 2);
       changeBy(new ActionEvent(this, 0, "", 0), 2);
     }
 
-    private void keyPressedInHexView(final KeyEvent event)
+    private void keyPressedInHexView(char ch)
     {
-      final int value = Character.digit(event.getKeyChar(), 16);
+      final int value = Character.digit(ch, 16);
 
       if (value == -1) {
         return;
@@ -4243,25 +4235,24 @@ public final class JHexView extends JComponent
       }
 
       final long offset = getCurrentOffset();
-      byte oldValue, newValue;
 
       final byte[] data = m_dataProvider.getData(offset, 1);
       if (data == null || data.length == 0) {
         return;
       }
-      oldValue = data[0];
 
       final long pos = m_baseAddress + getSelectionStart();
 
+      final byte oldValue = data[0];
+      final byte newValue;
       if (pos % 2 == 0) {
-        data[0] = (byte) (data[0] & 0x0F | value << 4);
-      }
-      else {
-        data[0] = (byte) (data[0] & 0xF0 | value);
+        newValue = (byte) (oldValue & 0x0F | value << 4);
+      } else {
+        newValue = (byte) (oldValue & 0xF0 | value);
       }
 
+      data[0] = newValue;
       m_dataProvider.setData(offset, data);
-      newValue = data[0];
 
       // mark offset as modified
       setModified(offset);
@@ -4269,7 +4260,6 @@ public final class JHexView extends JComponent
       // register as undoable action
       fireUndoableEditListener(new DataEdit(offset, oldValue, newValue, getActiveView()));
 
-//      setSelectionStart(getSelectionStart() + 1);
       changeBy(new ActionEvent(this, 0, "", 0), 1);
     }
 
@@ -4352,16 +4342,14 @@ public final class JHexView extends JComponent
         return;
       }
 
+      final char ch = event.getKeyChar();
       if (m_activeView == Views.HEX_VIEW) {
-
-        if (m_dataProvider.isEditable() && ConvertHelpers.isHexCharacter(event.getKeyChar())) {
-          keyPressedInHexView(event);
+        if (m_dataProvider.isEditable() && ConvertHelpers.isHexCharacter(ch)) {
+          keyPressedInHexView(ch);
         }
-      }
-      else {
-
-        if (m_dataProvider.isEditable() && ConvertHelpers.isPrintableCharacter(event.getKeyChar())) {
-          keyPressedInAsciiView(event);
+      } else {
+        if (m_dataProvider.isEditable() && ConvertHelpers.isPrintableCharacter(ch)) {
+          keyPressedInAsciiView(ch);
         }
       }
 
