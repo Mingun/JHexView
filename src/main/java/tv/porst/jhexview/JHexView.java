@@ -2248,8 +2248,7 @@ public final class JHexView extends JComponent
   /**
    * Draws the content of the hex view.
    *
-   * @param g
-   *          The graphics context of the hex panel.
+   * @param g The graphics context of the hex panel.
    */
   private void drawHexView(final Graphics g)
   {
@@ -2281,13 +2280,12 @@ public final class JHexView extends JComponent
     boolean evenColumn = true;
 
     byte[] data = null;
-    int bytesToDraw;
+    final int bytesToDraw;
 
     if (m_status == DefinitionStatus.DEFINED) {
       bytesToDraw = getBytesToDraw();
       data = m_dataProvider.getData(getFirstVisibleOffset(), bytesToDraw);
-    }
-    else {
+    } else {
       bytesToDraw = getMaximumVisibleBytes();
     }
 
@@ -2296,8 +2294,6 @@ public final class JHexView extends JComponent
     // Iterate over all bytes in the data set and
     // print their hex value to the hex view.
     for (int i = 0; i < bytesToDraw; i++, currentOffset++) {
-      final ColoredRange range = findColoredRange(currentOffset);
-
       if (i != 0) {
         if (i % m_bytesPerRow == 0) {
           // If the end of a row was reached, reset the x-coordinate
@@ -2307,8 +2303,8 @@ public final class JHexView extends JComponent
           y += m_rowHeight;
 
           evenColumn = true;
-        }
-        else if (i % m_bytesPerColumn == 0) {
+        } else
+        if (i % m_bytesPerColumn == 0) {
           // Add some spacing after each column.
           x += m_columnSpacing;
 
@@ -2333,27 +2329,24 @@ public final class JHexView extends JComponent
 
           // Choose the right color for the hex view
           g.setColor(evenColumn ? m_fontColorHex1 : m_fontColorHex2);
-        }
-        else if (range != null && range.containsOffset(currentOffset)) {
-          final Color bgColor = range.getBackgroundColor();
+        } else {
+          final ColoredRange range = findColoredRange(currentOffset);
+          if (range != null) {
+            final Color bgColor = range.getBackgroundColor();
 
-          if (bgColor != null) {
-            g.setColor(bgColor);
-          }
+            if (bgColor != null) {
+              g.setColor(bgColor);
+            }
 
-          g.fillRect(x - preSpaceX, y - m_charMaxAscent,
-                     2 * m_charWidth + preSpaceX + postSpaceX, m_charMaxAscent + m_charMaxDescent);
-          g.setColor(range.getColor());
-        }
-        else {
+            g.fillRect(x - preSpaceX, y - m_charMaxAscent,
+                       2 * m_charWidth + preSpaceX + postSpaceX, m_charMaxAscent + m_charMaxDescent);
+            g.setColor(range.getColor());
+          } else
           if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(data[i], currentOffset)) {
             final Color backgroundColor = m_colormap.getBackgroundColor(data[i], currentOffset);
-            final Color foregroundColor;
-            if (isShowModified() && isModified(currentOffset)) {
-              foregroundColor = m_fontColorModified;
-            } else {
-              foregroundColor = m_colormap.getForegroundColor(data[i], currentOffset);
-            }
+            final Color foregroundColor = isShowModified() && isModified(currentOffset)
+              ? m_fontColorModified
+              : m_colormap.getForegroundColor(data[i], currentOffset);
 
             if (backgroundColor != null) {
               g.setColor(backgroundColor);
@@ -2366,18 +2359,15 @@ public final class JHexView extends JComponent
             } else {
               g.setColor(evenColumn ? m_fontColorHex1 : m_fontColorHex2);
             }
-          }
-          else {
-            // Choose the right color for the hex view
-            if (isShowModified() && isModified(currentOffset)) {
-              g.setColor(m_fontColorModified);
-            } else {
-              g.setColor(evenColumn ? m_fontColorHex1 : m_fontColorHex2);
-            }
+          } else
+          // Choose the right color for the hex view
+          if (isShowModified() && isModified(currentOffset)) {
+            g.setColor(m_fontColorModified);
+          } else {
+            g.setColor(evenColumn ? m_fontColorHex1 : m_fontColorHex2);
           }
         }
-      }
-      else {
+      } else {
         g.setColor(m_disabledColor != m_bgColorHex ? m_disabledColor : Color.WHITE);
       }
 
@@ -2390,8 +2380,7 @@ public final class JHexView extends JComponent
 
         // Print the data
         g.drawString(HEX_BYTES[data[dataPosition] & 0xFF], x, y);
-      }
-      else {
+      } else {
         g.drawString("??", x, y);
       }
 
