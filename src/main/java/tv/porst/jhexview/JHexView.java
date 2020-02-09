@@ -1685,6 +1685,66 @@ public final class JHexView extends JComponent
   }
   //</editor-fold>
 
+  //<editor-fold defaultstate="collapsed" desc="Shortcuts">
+  /**
+   * Registers the specified shortcut for its predefined action.
+   *
+   * @param shortcut The shortcut to register.
+   */
+  public void registerShortcut(Shortcut shortcut)
+  {
+    final int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+    final InputMap inputMap = this.getInputMap();
+
+    switch (shortcut) {
+      case CTRL_A:
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, ctrl), "ctrl A");
+        break;
+      case CTRL_C:
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, ctrl), "ctrl C");
+        break;
+      case CTRL_V:
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, ctrl), "ctrl V");
+        break;
+      case CTRL_Y:
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ctrl), "ctrl Y");
+        break;
+      case CTRL_Z:
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ctrl), "ctrl Z");
+        break;
+    }
+  }
+  /**
+   * Unregisters the specified shortcut. Associated action will not be executed
+   * on shortcut afterwards.
+   *
+   * @param shortcut The shortcut to unregister.
+   */
+  public void unregisterShortcut(Shortcut shortcut)
+  {
+    final int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+    final InputMap inputMap = this.getInputMap();
+
+    switch (shortcut) {
+      case CTRL_A:
+        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_A, ctrl));
+        break;
+      case CTRL_C:
+        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_C, ctrl));
+        break;
+      case CTRL_V:
+        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_V, ctrl));
+        break;
+      case CTRL_Y:
+        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ctrl));
+        break;
+      case CTRL_Z:
+        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ctrl));
+        break;
+    }
+  }
+  //</editor-fold>
+
   //<editor-fold defaultstate="collapsed" desc="Private">
   /**
    * Calculates current character and row sizes.
@@ -3450,35 +3510,6 @@ public final class JHexView extends JComponent
     m_PasteTextAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
   }
 
-  /**
-   * Registers the specified shortcut for its predefined action.
-   * @param shortcut The shortcut to register.
-   */
-  public void registerShortcut(Shortcut shortcut)
-  {
-    int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-
-    final InputMap inputMap = this.getInputMap();
-
-    switch (shortcut) {
-      case CTRL_A:
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, ctrl), "ctrl A");
-        break;
-      case CTRL_C:
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, ctrl), "ctrl C");
-        break;
-      case CTRL_V:
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, ctrl), "ctrl V");
-        break;
-      case CTRL_Y:
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ctrl), "ctrl Y");
-        break;
-      case CTRL_Z:
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ctrl), "ctrl Z");
-        break;
-    }
-  }
-
   public void removeHexListener(final IHexViewListener listener)
   {
     if (listener == null) {
@@ -3514,35 +3545,6 @@ public final class JHexView extends JComponent
 //      }
 //    }
 //  }
-
-  /**
-   * Unregisters the specified shortcut. Associated action will not be executed on shortcut afterwards.
-   * @param shortcut The shortcut to unregister.
-   */
-  public void unregisterShortcut(Shortcut shortcut)
-  {
-    int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-
-    final InputMap inputMap = this.getInputMap();
-
-    switch (shortcut) {
-      case CTRL_A:
-        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_A, ctrl));
-        break;
-      case CTRL_C:
-        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_C, ctrl));
-        break;
-      case CTRL_V:
-        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_V, ctrl));
-        break;
-      case CTRL_Y:
-        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ctrl));
-        break;
-      case CTRL_Z:
-        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ctrl));
-        break;
-    }
-  }
 
   //<editor-fold defaultstate="collapsed" desc="Internal classes">
   /** Abstract superclass for undoable edits in the JHexView component. */
