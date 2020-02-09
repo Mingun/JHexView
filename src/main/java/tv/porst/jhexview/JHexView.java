@@ -2804,16 +2804,6 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns the number of bytes before the first visible byte.
-   *
-   * @return The number of bytes before the first visible byte.
-   */
-  private int getEarlierBytes()
-  {
-    return m_firstRow * m_bytesPerRow;
-  }
-
-  /**
    * Returns the first visible byte.
    *
    * @return The first visible byte.
@@ -2906,33 +2896,27 @@ public final class JHexView extends JComponent
   /**
    * Returns the index of the nibble below given coordinates.
    *
-   * @param x
-   *          The x coordinate.
-   * @param y
-   *          The y coordinate.
+   * @param x The x coordinate.
+   * @param y The y coordinate.
    *
    * @return The nibble index at the coordinates or -1 if there is no nibble at
    *         the coordinates.
    */
   private int getNibbleAtCoordinate(final int x, final int y)
   {
-    if (m_dataProvider == null) {
-      return -1;
-    }
-
-    if (x < getHexViewLeft() + m_paddingHexLeft) {
-      return -1;
-    }
-
-    if (y >= m_paddingTop + getHeaderHeight() - m_font.getSize()) {
-
-      if (x >= getHexViewLeft() && x < getHexViewLeft() + getHexViewWidth()) {
-        // Cursor is in hex view
-        return getNibbleAtCoordinatesHex(x, y);
-      }
-      else if (x >= getAsciiViewLeft()) {
+    if (m_dataProvider != null && y >= m_paddingTop + getHeaderHeight() - m_font.getSize()) {
+      final int left = getHexViewLeft();
+      // ____________________________
+      // |offsets|     hex    |ascii|
+      // |       |<=left      |     |
+      // '--------------------------'
+      if (x >= left + getHexViewWidth()) {
         // Cursor is in ASCII view
         return getNibbleAtCoordinatesAscii(x, y);
+      }
+      if (x >= left + m_paddingHexLeft) {
+        // Cursor is in hex view
+        return getNibbleAtCoordinatesHex(x, y);
       }
     }
 
@@ -2942,10 +2926,8 @@ public final class JHexView extends JComponent
   /**
    * Returns the index of the nibble below given coordinates in the ASCII view.
    *
-   * @param x
-   *          The x coordinate.
-   * @param y
-   *          The y coordinate.
+   * @param x The x coordinate.
+   * @param y The y coordinate.
    *
    * @return The nibble index at the coordinates or -1 if there is no nibble at
    *         the coordinates.
@@ -2955,38 +2937,25 @@ public final class JHexView extends JComponent
     // Normalize the x coordinate to inside the ASCII view
     final int normalizedX = x - (getAsciiViewLeft() + m_paddingAsciiLeft);
 
-    if (normalizedX < 0) {
+    if (normalizedX < 0 || normalizedX / m_charWidth >= m_bytesPerRow) {
       return -1;
     }
 
     // Find the row at the coordinate
     final int row = (y - (m_paddingTop + getHeaderHeight() - m_charHeight)) / m_rowHeight;
 
-    final int earlierPositions = 2 * getEarlierBytes();
+    final int byteAtPos = getFirstVisibleByte()
+                        + row * m_bytesPerRow
+                        + normalizedX / m_charWidth;
 
-    if (normalizedX / m_charWidth >= m_bytesPerRow) {
-      return -1;
-    }
-
-    final int character = 2 * (normalizedX / m_charWidth);
-
-    final int position = earlierPositions + 2 * row * m_bytesPerRow + character;
-
-    if (position >= 2 * m_dataProvider.getDataLength()) {
-      return -1;
-    }
-    else {
-      return position;
-    }
+    return byteAtPos >= m_dataProvider.getDataLength() ? -1 : 2 * byteAtPos;
   }
 
   /**
    * Returns the index of the nibble below given coordinates in the hex view.
    *
-   * @param x
-   *          The x coordinate.
-   * @param y
-   *          The y coordinate.
+   * @param x The x coordinate.
+   * @param y The y coordinate.
    *
    * @return The nibble index at the coordinates or -1 if there is no nibble at
    *         the coordinates.
@@ -3020,17 +2989,12 @@ public final class JHexView extends JComponent
     // Find the row at the coordinate
     final int row = (y - (m_paddingTop + getHeaderHeight() - m_charHeight)) / m_rowHeight;
 
-    final int earlierPositions = 2 * getEarlierBytes();
+    final int byteAtPos = getFirstVisibleByte()
+                        + row * m_bytesPerRow
+                        + column * m_bytesPerColumn;
+    final int position = 2 * byteAtPos + nibbleInColumn;
 
-    final int position = earlierPositions + 2 * (row * m_bytesPerRow + column * m_bytesPerColumn)
-        + nibbleInColumn;
-
-    if (position >= 2 * m_dataProvider.getDataLength()) {
-      return -1;
-    }
-    else {
-      return position;
-    }
+    return position >= 2 * m_dataProvider.getDataLength() ? -1 : position;
   }
 
   /**
