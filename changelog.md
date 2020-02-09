@@ -14,6 +14,9 @@ v2.0
   - `setAddressMode`
 - `getMouseOverHighlighted` renamed to `isMouseOverHighlighted`
 - `doFlipBytes` renamed to `isFlipBytes`
+- `getFontSize` removed. Use `getFont().getSize()`
+- `setFontSize` removed. Use `setFont(getFont().deriveFont((float)getFont().getSize()))`
+- `setFontStyle` removed. Use `setFont(getFont().deriveFont(...))`
 
 v1.1
 ====

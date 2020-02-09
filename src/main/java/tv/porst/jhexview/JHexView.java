@@ -1461,7 +1461,7 @@ public final class JHexView extends JComponent
   {
     if (font != m_font) {
       if (font == null) {
-        font = new Font(GuiHelpers.getMonospaceFont(), Font.PLAIN, getFontSize());
+        font = new Font(GuiHelpers.getMonospaceFont(), Font.PLAIN, m_font.getSize());
       }
       m_font = font;
       super.setFont(m_font);
@@ -1472,43 +1472,6 @@ public final class JHexView extends JComponent
 
       repaint();
     }
-  }
-
-  /**
-   * Returns the size of the font that is used to draw all data.
-   *
-   * @return The size of the font that is used to draw all data.
-   */
-  @Deprecated
-  public int getFontSize() { return m_font.getSize(); }
-  /**
-   * Sets the size of the font that is used to draw all data.
-   *
-   * @param size The size of the font that is used to draw all data.
-   *
-   * @throws IllegalArgumentException If the new font size is smaller than 1.
-   */
-  @Deprecated
-  public void setFontSize(final int size)
-  {
-    if (size <= 0) {
-      throw new IllegalArgumentException("Font size must be positive: " + size);
-    }
-
-    final Font curFont = getFont();
-    setFont(curFont.deriveFont((float)size));
-  }
-
-  /**
-   * Sets the font style that is used to draw all data.
-   *
-   * @param style The font style that is used to draw all data.
-   */
-  @Deprecated
-  public void setFontStyle(final int style)
-  {
-    final Font curFont = getFont();
-    setFont(curFont.deriveFont(style));
   }
 
   /**
