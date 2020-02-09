@@ -188,55 +188,44 @@ public final class JHexView extends JComponent
    */
   private int m_bytesPerColumn = 2;
 
-  /**
-   * Background color of the header view.
-   */
+  //<editor-fold defaultstate="collapsed" desc="Colors">
+  /** Background color of the header view. */
   private Color m_bgColorHeader = Color.WHITE;
-
-  /**
-   * Background color of the offset view.
-   */
+  /** Background color of the offset view. */
   private Color m_bgColorOffset = Color.GRAY;
-
-  /**
-   * Background color of the hex view.
-   */
+  /** Background color of the hex view. */
   private Color m_bgColorHex = Color.WHITE;
-
-  /**
-   * Background color of the ASCII view.
-   */
+  /** Background color of the ASCII view. */
   private Color m_bgColorAscii = Color.WHITE;
 
-  /**
-   * Font color of the header view.
-   */
+  /** Font color of the header view. */
   private Color m_fontColorHeader = new Color(0x0000BF);
-
-  /**
-   * Font color of the offset view.
-   */
+  /** Font color of the offset view. */
   private Color m_fontColorOffsets = Color.WHITE;
-
-  /**
-   * Font color of the hex view.
-   */
+  /** Font color of the hex view for even columns. */
   private Color m_fontColorHex1 = Color.BLUE;
-
-  /**
-   * Font color of the hex view.
-   */
+  /** Font color of the hex view for odd columns. */
   private Color m_fontColorHex2 = new Color(0x3399FF);
-
-  /**
-   * Font color of the ASCII view.
-   */
+  /** Font color of the ASCII view. */
   private Color m_fontColorAscii = new Color(0x339900);
 
-  /**
-   * Font color for data that has been modified by the user
-   */
+  /** Color that is used to draw all text in disabled components. */
+  private Color m_disabledColor = Color.GRAY;
+  /** Color that is used to highlight data when the mouse cursor hovers of the data. */
+  private Color m_colorHighlight = Color.LIGHT_GRAY;
+  /** Color that is used to draw background of selected data. */
+  private Color m_selectionColor = Color.YELLOW;
+  /** Font color for data that has been modified by the user. */
   private Color m_fontColorModified = Color.RED;
+
+  /** Manager that keeps track of specially colored byte ranges. */
+  private final ColoredRangeManager[] m_coloredRanges = new ColoredRangeManager[10];
+
+  /** Color map, used for assigning colors to bytes from its content and/or offsets. */
+  private IColormap m_colormap;
+  /** Determines whether to use an assigned color map to colorize data. */
+  private boolean m_colorMapEnabled = true;
+  //</editor-fold>
 
   /**
    * Used to store the height of a single row. This value is updated every time
@@ -296,11 +285,6 @@ public final class JHexView extends JComponent
   private JCaret m_caret = new JCaret();
 
   /**
-   * Color that is used to draw all text in disabled components.
-   */
-  private final Color m_disabledColor = Color.GRAY;
-
-  /**
    * Left-padding of the hex view in pixels.
    */
   private final int m_paddingHexLeft = 10;
@@ -331,12 +315,6 @@ public final class JHexView extends JComponent
   private int m_charMaxDescent = 3;
 
   /**
-   * Color that is used to highlight data when the mouse cursor hovers of the
-   * data.
-   */
-  private final Color m_colorHighlight = Color.LIGHT_GRAY;
-
-  /**
    * Start with an undefined definition status.
    */
   private DefinitionStatus m_status = DefinitionStatus.UNDEFINED;
@@ -356,11 +334,6 @@ public final class JHexView extends JComponent
    * Width of the offset view part of the component.
    */
   private int m_offsetViewWidth;
-
-  /**
-   * Manager that keeps track of specially colored byte ranges.
-   */
-  private final ColoredRangeManager[] m_coloredRanges = new ColoredRangeManager[10];
 
   /**
    * Timer that is used to refresh the component if no data for the selected
@@ -492,11 +465,6 @@ public final class JHexView extends JComponent
   private int m_headerFontStyle = Font.PLAIN;
 
   /**
-   * Determines whether to use an assigned color map to colorize data.
-   */
-  private boolean m_colorMapEnabled = true;
-
-  /**
    * Determines whether to draw vertical lines between the individual views.
    */
   private boolean m_separatorsVisible = true;
@@ -510,10 +478,6 @@ public final class JHexView extends JComponent
    * Determines whether to highlight the byte under the mouse cursor.
    */
   private boolean m_mouseOverHighlighted = true;
-
-  private IColormap m_colormap;
-
-  private Color m_selectionColor = Color.YELLOW;
 
   /**
    * Determines whether the bytes inside a column are flipped or not.
@@ -569,6 +533,451 @@ public final class JHexView extends JComponent
 
     updateOffsetViewWidth();
   }
+
+  //<editor-fold defaultstate="collapsed" desc="Colors">
+  /**
+   * Returns the current background color of the header view.
+   *
+   * @return The current background color of the header view.
+   */
+  public Color getBackgroundColorHeader() { return m_bgColorHeader; }
+  /**
+   * Sets the current background color of the header view.
+   *
+   * @param color
+   *          The new background color of the header view.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setBackgroundColorHeader(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Error: Color can't be null");
+    }
+
+    m_bgColorHeader = color;
+    repaint();
+  }
+
+  /**
+   * Returns the current background color of the offset view.
+   *
+   * @return The current background color of the offset view.
+   */
+  public Color getBackgroundColorOffsetView() { return m_bgColorOffset; }
+  /**
+   * Sets the current background color of the offset view.
+   *
+   * @param color
+   *          The new background color of the offset view.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setBackgroundColorOffsetView(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Error: Color can't be null");
+    }
+
+    m_bgColorOffset = color;
+    repaint();
+  }
+
+  /**
+   * Returns the current background color of the hex view.
+   *
+   * @return The current background color of the hex view.
+   */
+  public Color getBackgroundColorHexView() { return m_bgColorHex; }
+  /**
+   * Sets the current background color of the hex view.
+   *
+   * @param color
+   *          The new background color of the hex view.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setBackgroundColorHexView(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Error: Color can't be null");
+    }
+
+    m_bgColorHex = color;
+    repaint();
+  }
+
+  /**
+   * Returns the current background color of the ASCII view.
+   *
+   * @return The current background color of the ASCII view.
+   */
+  public Color getBackgroundColorAsciiView() { return m_bgColorAscii; }
+  /**
+   * Sets the current background color of the ASCII view.
+   *
+   * @param color
+   *          The new background color of the ASCII view.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setBackgroundColorAsciiView(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Error: Color can't be null");
+    }
+
+    m_bgColorAscii = color;
+    repaint();
+  }
+
+
+  /**
+   * Returns the current font color of the header view.
+   *
+   * @return The current font color of the header view.
+   */
+  public Color getFontColorHeader() { return m_fontColorHeader; }
+  /**
+   * Sets the current font color of the header view.
+   *
+   * @param color
+   *          The new font color of the header view.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setFontColorHeader(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Font color for header view can't be null");
+    }
+
+    m_fontColorHeader = color;
+    repaint();
+  }
+
+  /**
+   * Returns the current font color of the offset view.
+   *
+   * @return The current font color of the offset view.
+   */
+  public Color getFontColorOffsetView() { return m_fontColorOffsets; }
+  /**
+   * Sets the current font color of the offset view.
+   *
+   * @param color
+   *          The new font color of the offset view.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setFontColorOffsetView(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Font color for offset view can't be null");
+    }
+
+    m_fontColorOffsets = color;
+    repaint();
+  }
+
+  /**
+   * Returns the current font color of even columns in the hex view.
+   *
+   * @return The current font color of even columns in the hex view.
+   */
+  public Color getFontColorHexView1() { return m_fontColorHex1; }
+  /**
+   * Sets the current font color of even columns in the hex view.
+   *
+   * @param color
+   *          The new font color of even columns in the hex view.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setFontColorHexView1(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Font color for even columns can't be null");
+    }
+
+    m_fontColorHex1 = color;
+    repaint();
+  }
+
+  /**
+   * Returns the current font color of odd columns in the hex view.
+   *
+   * @return The current font color of odd columns in the hex view.
+   */
+  public Color getFontColorHexView2() { return m_fontColorHex2; }
+  /**
+   * Sets the current font color of odd columns in the hex view.
+   *
+   * @param color
+   *          The new font color of odd columns in the hex view.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setFontColorHexView2(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Font color for odd columns can't be null");
+    }
+
+    m_fontColorHex2 = color;
+    repaint();
+  }
+
+  /**
+   * Returns the current font color of the ASCII view.
+   *
+   * @return The current font color of the ASCII view.
+   */
+  public Color getFontColorAsciiView() { return m_fontColorAscii; }
+  /**
+   * Sets the current font color of the ASCII view.
+   *
+   * @param color
+   *          The new font color of the ASCII view.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setFontColorAsciiView(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Font color for ASCII view can't be null");
+    }
+
+    m_fontColorAscii = color;
+    repaint();
+  }
+
+
+  /**
+   * Returns the current selection background color.
+   *
+   * @return The current selection background color.
+   */
+  public Color getSelectionColor() { return m_selectionColor; }
+  /**
+   * Sets the current selection background color.
+   *
+   * @param color
+   *          The new selection background color.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setSelectionColor(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Selection color can't be null");
+    }
+
+    m_selectionColor = color;
+    repaint();
+  }
+
+  /**
+   * Returns the current font color for modified data.
+   *
+   * @return The current font color for modified data.
+   */
+  public Color getFontColorModified() { return m_fontColorModified; }
+  /**
+   * Sets the font color for data that has been modified by the user.
+   *
+   * @param color
+   *          The font color for data that has been modified by the user.
+   *
+   * @throws NullPointerException
+   *           Thrown if the new color is null.
+   */
+  public void setFontColorModified(final Color color)
+  {
+    if (color == null) {
+      throw new NullPointerException("Font color for modified data can't be null");
+    }
+
+    m_fontColorModified = color;
+    repaint();
+  }
+
+  /**
+   * Returns the currently assigned caret color.
+   * @return
+   */
+  public Color getCaretColor() { return m_caret.getColor(); }
+  /**
+   * Assigns a new color to the caret.
+   * @param color The new caret color.
+   */
+  public void setCaretColor(final Color color)
+  {
+    m_caret.setColor(color);
+    repaint();
+  }
+
+  /**
+   * Returns whether {@link #getColorMap() a color map} is used to colorize data.
+   * This colorization doesn't affect currently {@link #setSelectionLength selected}
+   * byte ranges. The color map is used only if the colorized byte does not contained
+   * within any explicitly defined {@link #colorize color range}.
+   *
+   * @return {@code true}, if data will be colorized, {@code false}, otherwise.
+   */
+  public boolean isColorMapEnabled() { return m_colorMapEnabled; }
+  /**
+   * Specify whether to enable the currently assigned color map.
+   * This colorization doesn't affect currently {@link #setSelectionLength selected}
+   * byte ranges. The color map is used only if the colorized byte does not contained
+   * within any explicitly defined {@link #colorize color range}.
+   *
+   * @param enabled If {@code true}, then colors of each byte determined by
+   *        {@link #getColorMap() color map} if it defined and {@link IColormap#colorize(byte, long)}
+   *        returns {@code true}
+   */
+  public void setColorMapEnabled(boolean enabled)
+  {
+    if (enabled != m_colorMapEnabled) {
+      m_colorMapEnabled = enabled;
+      repaint();
+    }
+  }
+  /**
+   * Returns the currently assigned color map, if any.
+   * This colorization doesn't affect currently {@link #setSelectionLength selected}
+   * byte ranges. The color map is used only if the colorized byte does not contained
+   * within any explicitly defined {@link #colorize color range}.
+   *
+   * @return The currently assigned color map.
+   */
+  public IColormap getColorMap() { return m_colormap; }
+  /**
+   * Assigns a new color map.
+   * This colorization doesn't affect currently {@link #setSelectionLength selected}
+   * byte ranges. The color map is used only if the colorized byte does not contained
+   * within any explicitly defined {@link #colorize color range}.
+   *
+   * @param colormap The new color map.
+   */
+  public void setColormap(final IColormap colormap)
+  {
+    m_colormap = colormap;
+    repaint();
+  }
+
+  /**
+   * Colorizes a range of bytes in special colors. To keep the default text or
+   * background color, it is possible to pass null as these colors. This colorization
+   * doesn't affect currently {@link #setSelectionLength selected} byte ranges.
+   * This setting has priority under {@link #setColormap color maps}
+   *
+   * @param level Priority level at which specified color range must be added.
+   *        Ranges with lowest level has priority
+   * @param offset The start offset of the byte range
+   * @param size The number of bytes in the range
+   * @param color The text color that is used to color that range
+   * @param bgcolor The background color that is used to color that range
+   *
+   * @throws IllegalArgumentException If {@code level} not in range {@code [0; 9]},
+   *         {@code offset} is negative, {@code size} is not positive
+   *
+   * @see #uncolorize
+   * @see #uncolorizeAll()
+   * @see #uncolorizeAll(int)
+   */
+  public void colorize(int level, long offset, int size, Color color, Color bgcolor)
+  {
+    getColoredRange(level, offset, size).addRange(new ColoredRange(offset, size, color, bgcolor));
+    repaint();
+  }
+
+  /**
+   * Removes special colorization from a range of bytes.
+   *
+   * @param level The colored range that must be disabled
+   * @param offset The start offset of the byte range
+   * @param size The number of bytes in the byte range
+   *
+   * @throws IllegalArgumentException If {@code level} not in range {@code [0; 9]},
+   *         {@code offset} is negative, {@code size} is not positive
+   *
+   * @see #colorize
+   * @see #uncolorizeAll()
+   * @see #uncolorizeAll(int)
+   */
+  public void uncolorize(int level, long offset, int size)
+  {
+    getColoredRange(level, offset, size).removeRange(offset, size);
+    repaint();
+  }
+
+  /**
+   * Removes special range colorizations for specified color range.
+   *
+   * @param level The colored range that must be completely removed
+   *
+   * @throws IllegalArgumentException If {@code level} not in range {@code [0; 9]}
+   *
+   * @see #colorize
+   * @see #uncolorize
+   * @see #uncolorizeAll()
+   */
+  public void uncolorizeAll(int level)
+  {
+    getColoredRange(level, 0, 1).clear();
+    repaint();
+  }
+
+  /**
+   * Removes all special range colorizations.
+   *
+   * @see #colorize
+   * @see #uncolorize
+   * @see #uncolorizeAll(int)
+   */
+  public void uncolorizeAll()
+  {
+    for (final ColoredRangeManager coloredRange : m_coloredRanges) {
+      coloredRange.clear();
+    }
+    repaint();
+  }
+  private ColoredRangeManager getColoredRange(int level, long offset, int size)
+  {
+    if (level < 0 || level >= m_coloredRanges.length) {
+      throw new IllegalArgumentException("Invalid level: " + level + ", must be in range [0 ;"
+        + m_coloredRanges.length + ")");
+    }
+    if (offset < 0) {
+      throw new IllegalArgumentException("Offset can't be negative: 0x" + Long.toHexString(offset));
+    }
+    if (size <= 0) {
+      throw new IllegalArgumentException("Size must be positive: " + size);
+    }
+    return m_coloredRanges[level];
+  }
+  private ColoredRange findColoredRange(long currentOffset)
+  {
+    for (final ColoredRangeManager element : m_coloredRanges) {
+      final ColoredRange range = element.findRangeWith(currentOffset);
+      if (range != null) {
+        return range;
+      }
+    }
+    return null;
+  }
+  //</editor-fold>
 
   //<editor-fold defaultstate="collapsed" desc="Private">
   /**
@@ -1205,20 +1614,6 @@ public final class JHexView extends JComponent
       int y = m_paddingTop + getHeaderHeight() + currentRow * m_rowHeight;
       g.drawString(offsetString, x, y);
     }
-  }
-
-  private ColoredRange findColoredRange(final long currentOffset)
-  {
-    for (final ColoredRangeManager element : m_coloredRanges) {
-
-      final ColoredRange range = element.findRangeWith(currentOffset);
-
-      if (range != null) {
-        return range;
-      }
-    }
-
-    return null;
   }
 
   /**
@@ -2312,43 +2707,6 @@ public final class JHexView extends JComponent
     repaint();
   }
 
-  /**
-   * Colorizes a range of bytes in special colors. To keep the default text or
-   * background color, it is possible to pass null as these colors.
-   *
-   * @param offset
-   *          The start offset of the byte range.
-   * @param size
-   *          The number of bytes in the range.
-   * @param color
-   *          The text color that is used to color that range.
-   * @param bgcolor
-   *          The background color that is used to color that range.
-   *
-   * @throws IllegalArgumentException
-   *           Thrown if offset is negative or size is not positive.
-   */
-  public void colorize(final int level, final long offset, final int size, final Color color,
-                       final Color bgcolor)
-  {
-    if (offset < 0) {
-      throw new IllegalArgumentException("Offset can't be negative: 0x" + Long.toHexString(offset));
-    }
-
-    if (size <= 0) {
-      throw new IllegalArgumentException("Size must be positive: " + size);
-    }
-
-    if (level < 0 || level >= m_coloredRanges.length) {
-      throw new IllegalArgumentException("Invalid level: " + level + ", must be in range [0 ;"
-        + m_coloredRanges.length + ")");
-    }
-
-    m_coloredRanges[level].addRange(new ColoredRange(offset, size, color, bgcolor));
-
-    repaint();
-  }
-
   public void dispose()
   {
     removeMouseListener(m_listener);
@@ -2464,46 +2822,6 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns the current background color of the ASCII view.
-   *
-   * @return The current background color of the ASCII view.
-   */
-  public Color getBackgroundColorAsciiView()
-  {
-    return m_bgColorAscii;
-  }
-
-  /**
-   * Returns the current background color of the header view.
-   *
-   * @return The current background color of the header view.
-   */
-  public Color getBackgroundColorHeader()
-  {
-    return m_bgColorHeader;
-  }
-
-  /**
-   * Returns the current background color of the hex view.
-   *
-   * @return The current background color of the hex view.
-   */
-  public Color getBackgroundColorHexView()
-  {
-    return m_bgColorHex;
-  }
-
-  /**
-   * Returns the current background color of the offset view.
-   *
-   * @return The current background color of the offset view.
-   */
-  public Color getBackgroundColorOffsetView()
-  {
-    return m_bgColorOffset;
-  }
-
-  /**
    * Returns the current base address.
    *
    * @return The current base address.
@@ -2531,24 +2849,6 @@ public final class JHexView extends JComponent
   public int getBytesPerRow()
   {
     return m_bytesPerRow;
-  }
-
-  /**
-   * Returns the currently assigned caret color.
-   * @return
-   */
-  public Color getCaretColor()
-  {
-    return m_caret.getColor();
-  }
-
-  /**
-   * Returns the currently assigned color map, if any.
-   * @return The currently assigned color map.
-   */
-  public IColormap getColorMap()
-  {
-    return m_colormap;
   }
 
   /**
@@ -2623,56 +2923,6 @@ public final class JHexView extends JComponent
   public Font getFont()
   {
     return m_font;
-  }
-
-  /**
-   * Returns the current font color of the ASCII view.
-   *
-   * @return The current font color of the ASCII view.
-   */
-  public Color getFontColorAsciiView()
-  {
-    return m_fontColorAscii;
-  }
-
-  /**
-   * Returns the current font color of the header view.
-   *
-   * @return The current font color of the header view.
-   */
-  public Color getFontColorHeader()
-  {
-    return m_fontColorHeader;
-  }
-
-  /**
-   * Returns the current font color of even columns in the hex view.
-   *
-   * @return The current font color of even columns in the hex view.
-   */
-  public Color getFontColorHexView1()
-  {
-    return m_fontColorHex1;
-  }
-
-  /**
-   * Returns the current font color of odd columns in the hex view.
-   *
-   * @return The current font color of odd columns in the hex view.
-   */
-  public Color getFontColorHexView2()
-  {
-    return m_fontColorHex2;
-  }
-
-  /**
-   * Returns the current font color of the offset view.
-   *
-   * @return The current font color of the offset view.
-   */
-  public Color getFontColorOffsetView()
-  {
-    return m_fontColorOffsets;
   }
 
   /**
@@ -2781,16 +3031,6 @@ public final class JHexView extends JComponent
     }
   }
 
-  /**
-   * Returns the current selection background color.
-   *
-   * @return The current selection background color.
-   */
-  public Color getSelectionColor()
-  {
-    return m_selectionColor;
-  }
-
   public long getSelectionLength()
   {
     return m_selectionLength;
@@ -2851,15 +3091,6 @@ public final class JHexView extends JComponent
     }
 
     setCurrentPosition(2 * realOffset);
-  }
-
-  /**
-   * Returns whether a color map is used to colorize data.
-   * @return True, if data will be colorized. False, otherwise.
-   */
-  public boolean isColorMapEnabled()
-  {
-    return m_colorMapEnabled;
   }
 
   /**
@@ -3042,86 +3273,6 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Sets the current background color of the ASCII view.
-   *
-   * @param color
-   *          The new background color of the ASCII view.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setBackgroundColorAsciiView(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
-    }
-
-    m_bgColorAscii = color;
-
-    repaint();
-  }
-
-  /**
-   * Sets the current background color of the header view.
-   *
-   * @param color
-   *          The new background color of the header view.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setBackgroundColorHeader(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
-    }
-
-    m_bgColorHeader = color;
-
-    repaint();
-  }
-
-  /**
-   * Sets the current background color of the hex view.
-   *
-   * @param color
-   *          The new background color of the hex view.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setBackgroundColorHexView(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
-    }
-
-    m_bgColorHex = color;
-
-    repaint();
-  }
-
-  /**
-   * Sets the current background color of the offset view.
-   *
-   * @param color
-   *          The new background color of the offset view.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setBackgroundColorOffsetView(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Error: Color can't be null");
-    }
-
-    m_bgColorOffset = color;
-
-    repaint();
-  }
-
-  /**
    * Sets the current base address.
    *
    * @param baseAddress
@@ -3185,38 +3336,6 @@ public final class JHexView extends JComponent
     m_bytesPerRow = value;
 
     repaint();
-  }
-
-  /**
-   * Assigns a new color to the caret.
-   * @param color The new caret color.
-   */
-  public void setCaretColor(final Color color)
-  {
-    m_caret.setColor(color);
-  }
-
-  /**
-   * Assigns a new color map.
-   * @param colormap The new color map.
-   */
-  public void setColormap(final IColormap colormap)
-  {
-    m_colormap = colormap;
-
-    repaint();
-  }
-
-  /**
-   * Specify whether to enable the currently assigned color map.
-   */
-  public void setColorMapEnabled(boolean set)
-  {
-    if (set != m_colorMapEnabled) {
-      m_colorMapEnabled = set;
-
-      repaint();
-    }
   }
 
   /**
@@ -3362,126 +3481,6 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Sets the current font color of the ASCII view.
-   *
-   * @param color
-   *          The new font color of the ASCII view.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setFontColorAsciiView(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Font color for ASCII view can't be null");
-    }
-
-    m_fontColorAscii = color;
-
-    repaint();
-  }
-
-  /**
-   * Sets the current font color of the header view.
-   *
-   * @param color
-   *          The new font color of the header view.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setFontColorHeader(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Font color for header view can't be null");
-    }
-
-    m_fontColorHeader = color;
-
-    repaint();
-  }
-
-  /**
-   * Sets the current font color of even columns in the hex view.
-   *
-   * @param color
-   *          The new font color of even columns in the hex view.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setFontColorHexView1(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Font color for even columns can't be null");
-    }
-
-    m_fontColorHex1 = color;
-
-    repaint();
-  }
-
-  /**
-   * Sets the current font color of odd columns in the hex view.
-   *
-   * @param color
-   *          The new font color of odd columns in the hex view.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setFontColorHexView2(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Font color for odd columns can't be null");
-    }
-
-    m_fontColorHex2 = color;
-
-    repaint();
-  }
-
-  /**
-   * Sets the current font color of the offset view.
-   *
-   * @param color
-   *          The new font color of the offset view.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setFontColorOffsetView(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Font color for offset view can't be null");
-    }
-
-    m_fontColorOffsets = color;
-
-    repaint();
-  }
-
-  /**
-   * Sets the font color for data that has been modified by the user.
-   *
-   * @param color
-   *          The font color for data that has been modified by the user.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setFontColorModified(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Font color for modified data can't be null");
-    }
-
-    m_fontColorModified = color;
-
-    repaint();
-  }
-
-  /**
    * Sets the size of the font that is used to draw all data.
    *
    * @param size
@@ -3587,26 +3586,6 @@ public final class JHexView extends JComponent
     }
   }
 
-  /**
-   * Sets the current selection background color.
-   *
-   * @param color
-   *          The new selection background color.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new color is null.
-   */
-  public void setSelectionColor(final Color color)
-  {
-    if (color == null) {
-      throw new NullPointerException("Selection color can't be null");
-    }
-
-    m_selectionColor = color;
-
-    repaint();
-  }
-
   public void setSelectionLength(final long selectionLength)
   {
     if (selectionLength != m_selectionLength) {
@@ -3662,54 +3641,6 @@ public final class JHexView extends JComponent
 //      }
 //    }
 //  }
-
-  /**
-   * Removes special colorization from a range of bytes.
-   *
-   * @param offset
-   *          The start offset of the byte range.
-   * @param size
-   *          The number of bytes in the byte range.
-   *
-   * @throws IllegalArgumentException
-   *           Thrown if offset is negative or size is not positive.
-   */
-  public void uncolorize(final int level, final long offset, final int size)
-  {
-    if (offset < 0) {
-      throw new IllegalArgumentException("Offset can't be negative: 0x" + Long.toHexString(offset));
-    }
-
-    if (size <= 0) {
-      throw new IllegalArgumentException("Size must be positive: " + size);
-    }
-
-    if (level < 0 || level >= m_coloredRanges.length) {
-      throw new IllegalArgumentException("Invalid level: " + level + ", must be in range [0 ;"
-        + m_coloredRanges.length + ")");
-    }
-
-    m_coloredRanges[level].removeRange(offset, size);
-
-    repaint();
-  }
-
-  public void uncolorizeAll()
-  {
-    for (final ColoredRangeManager coloredRange : m_coloredRanges) {
-      coloredRange.clear();
-    }
-  }
-
-  /**
-   * Removes all special range colorizations.
-   */
-  public void uncolorizeAll(final int level)
-  {
-    m_coloredRanges[level].clear();
-
-    repaint();
-  }
 
   /** Performs an undo action if available. */
   public void undo()
