@@ -2087,58 +2087,47 @@ public final class JHexView extends JComponent
   /**
    * Draws the background of the hex panel.
    *
-   * @param g
-   *          The graphics context of the hex panel.
+   * @param g The graphics context of the hex panel.
    */
   private void drawBackground(final Graphics g)
   {
-    int x, y, w, h;
+    final int H  = getHeight();
+    final int W  = getWidth();
+    final int HH = getHeaderHeight();
 
     // clearing whole component
     g.setColor(getBackground());
-    x = y = 0; w = getWidth(); h = getHeight();
-    g.fillRect(x, y, w, h);
+    g.fillRect(0, 0, W, H);
+
+    final int x1 = -m_firstColumn * m_charWidth;// Start of offsets area
+    final int x2 = x1 + m_offsetViewWidth;      // Start of HEX area
+    final int x3 = x2 + m_hexViewWidth;         // Start of ASCII area
 
     // Draw the background of the header view
     if (m_headerVisible) {
+      final int w = W - x1 - m_scrollbar.getWidth();
       g.setColor(m_bgColorHeader);
-      x = -m_firstColumn * m_charWidth;
-      y = 0;
-      int asciiWidth = m_firstColumn * m_charWidth + getWidth()
-                       - (m_hexViewWidth + m_offsetViewWidth) - m_scrollbar.getWidth();
-      w = m_offsetViewWidth + m_hexViewWidth + asciiWidth;
-      h = getHeaderHeight();
-      g.fillRect(x, y, w, h);
+      g.fillRect(x1, 0, w, HH);
     }
 
     // Draw the background of the offset view
     g.setColor(m_bgColorOffset);
-    x = -m_firstColumn * m_charWidth;
-    y = getHeaderHeight();
-    w = m_offsetViewWidth;
-    h = getHeight();
-    g.fillRect(x, y, w, h);
+    g.fillRect(x1, HH, m_offsetViewWidth, H);
 
     // Draw the background of the hex view
     g.setColor(m_bgColorHex);
-    g.fillRect(-m_firstColumn * m_charWidth + m_offsetViewWidth, y, m_hexViewWidth, getHeight());
+    g.fillRect(x2, HH, m_hexViewWidth, H);
 
     // Draw the background of the ASCII view
+    final int w = m_bytesPerRow * m_charWidth + 2 * m_paddingAsciiLeft;
     g.setColor(m_bgColorAscii);
-    x = -m_firstColumn * m_charWidth + m_hexViewWidth + m_offsetViewWidth;
-    y = getHeaderHeight();
-//    w = m_firstColumn * m_charWidth + getWidth() - (m_hexViewWidth + m_offsetViewWidth) - m_scrollbar.getWidth();
-    w = m_bytesPerRow * m_charWidth + 2*m_paddingAsciiLeft;
-    h = getHeight() - m_horizontalScrollbar.getHeight();
-    g.fillRect(x, y, w, h);
+    g.fillRect(x3, HH, w, H);
 
     // Draw the lines that separate the individual views
     if (m_separatorsVisible) {
       g.setColor(Color.BLACK);
-      g.drawLine(-m_firstColumn * m_charWidth + m_offsetViewWidth, y, -m_firstColumn * m_charWidth
-                 + m_offsetViewWidth, getHeight());
-      g.drawLine(-m_firstColumn * m_charWidth + m_offsetViewWidth + m_hexViewWidth, y, -m_firstColumn
-                 * m_charWidth + m_offsetViewWidth + m_hexViewWidth, getHeight());
+      g.drawLine(x2, HH, x2, H);
+      g.drawLine(x3, HH, x3, H);
     }
   }
 
