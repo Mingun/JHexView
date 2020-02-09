@@ -3340,6 +3340,57 @@ public final class JHexView extends JComponent
     setPreferredSize(new Dimension(width, getHeight()));
     revalidate();
   }
+
+  /**
+   * Check if specified byte can be used to expand selection in ASCII view.
+   *
+   * @param value Byte for check
+   *
+   * @return {@code true}, if byte can be included in double-click selection expansion
+   *         and {@code false} otherwise
+   */
+  private boolean needSkip(byte value)
+  {
+    final char ch = ConvertHelpers.toChar(value);
+    return ".,:;()?!-'/\"".indexOf(ch) >= 0 // stop-symbols
+        || Character.isWhitespace(ch)       // whitespace
+        || !getFont().canDisplay(ch);       // non-displayable characters
+  }
+  /**
+   * Expands selection from specified byte position while byte represents
+   * not-whitespace, not-special ({@code .,:;()?!-'/"}) symbols and symbols,
+   * that {@link #getFont currect font} can display.
+   *
+   * @param offset Initial byte offset for selection
+   */
+  private void expandSelection(int offset)
+  {
+    // Starting from initial position, find word delimiter characters in both directions
+    int start = offset;
+    int end = offset;
+    if (!needSkip(m_dataProvider.getData(offset, 1)[0])) {
+      // find starting delimiter
+      for (int i = 1; i < offset; i++) {
+        if (needSkip(m_dataProvider.getData(offset-i, 1)[0])) {
+          break;
+        }
+        start--;
+      }
+
+      // find ending delimiter
+      final int maxLength = m_dataProvider.getDataLength() - offset;
+      for (int i = 1; i < maxLength; i++) {
+        if (needSkip(m_dataProvider.getData(offset+i, 1)[0])) {
+          break;
+        }
+        end++;
+      }
+    }
+
+    m_selectionStart  = 2 * start;
+    m_selectionLength = 2 * (end - start + 1);
+    fireHexListener(m_selectionStart, m_selectionLength);
+  }
   //</editor-fold>
 
   /**
@@ -4134,13 +4185,11 @@ public final class JHexView extends JComponent
         final int x = event.getX();
         final int y = event.getY();
 
-        int position = getNibbleAtCoordinate(x, y);
-
         Views oldView = m_activeView;
         if (isInsideHexView(x, y)) {
           m_activeView = Views.HEX_VIEW;
-        }
-        else if (isInsideAsciiView(x, y)) {
+        } else
+        if (isInsideAsciiView(x, y)) {
           m_activeView = Views.ASCII_VIEW;
         }
 
@@ -4150,56 +4199,22 @@ public final class JHexView extends JComponent
 
         m_caret.setVisible(true);
 
+        final int position = getNibbleAtCoordinate(x, y);
         if (position != -1) {
           // double click selects a whole word
-          if (event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2 &&
-              m_activeView == Views.ASCII_VIEW) {
-            position /= 2;  // get byte position
-
-            // starting from click-position, find word delimiter characters in both directions
-            final String delimiter = ".,:;()?!-'/\"";
-            char ch = ConvertHelpers.toChar(getData().getData(position, 1)[0]);
-            int posStart = position, posEnd = position;
-            if (!Character.isWhitespace(ch) && delimiter.indexOf(ch) < 0 &&
-                getFont().canDisplay(ch)) {
-              // find starting delimiter
-              for (int i = 1; i < position; i++) {
-                ch = ConvertHelpers.toChar(getData().getData(position-i, 1)[0]);
-                if (Character.isWhitespace(ch) || delimiter.indexOf(ch) >= 0 ||
-                    !getFont().canDisplay(ch)) {
-                  break;
-                }
-                posStart--;
-              }
-
-              // find ending delimiter
-              final int maxLength = getData().getDataLength() - position;
-              for (int i = 1; i < maxLength; i++) {
-                ch = ConvertHelpers.toChar(getData().getData(position+i, 1)[0]);
-                if (Character.isWhitespace(ch) || delimiter.indexOf(ch) >= 0 ||
-                    !getFont().canDisplay(ch)) {
-                  break;
-                }
-                posEnd++;
-              }
-            }
-
-            m_selectionStart = posStart * 2;
-            m_selectionLength = 2 * (posEnd - posStart + 1);
-            fireHexListener(m_selectionStart, m_selectionLength);
+          if (event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2
+           && m_activeView == Views.ASCII_VIEW
+          ) {
+            expandSelection(position / 2);// get byte position
           } else {
             setCurrentPosition(position);
           }
-          repaint();
-        }
-        else {
+        } else {
           // m_selectionLength = 0 must be notified in case the click position
           // is invalid.
-
           fireHexListener(m_selectionStart, m_selectionLength);
-
-          repaint();
         }
+        repaint();
       }
 
       if (event.isPopupTrigger()) {
