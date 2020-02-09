@@ -1,6 +1,19 @@
 v2.0
 ====
 - Remove unused parts of embedded splib library
+- `setActiveView` now throw NPE if argument is `null`
+- Now component doesn't redrawed when specified setters is called if value of property actually doesn't changed:
+  - `setAddressMode`
+  - `setBaseAddress`
+  - `setBytesPerColumn`
+  - `setBytesPerRow`
+  - `setColumnSpacing`
+  - `setDefinitionStatus`
+  - `setHexViewWidth`
+- Redraw view when call setters:
+  - `setAddressMode`
+- `getMouseOverHighlighted` renamed to `isMouseOverHighlighted`
+- `doFlipBytes` renamed to `isFlipBytes`
 
 v1.1
 ====

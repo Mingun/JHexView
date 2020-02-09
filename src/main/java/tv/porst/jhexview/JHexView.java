@@ -1179,6 +1179,549 @@ public final class JHexView extends JComponent
   }
   //</editor-fold>
 
+  //<editor-fold defaultstate="collapsed" desc="Properties">
+  /**
+   * Returns the currently selected view.
+   *
+   * @return The currently selected view.
+   */
+  public Views getActiveView() { return m_activeView; }
+  /**
+   * Selects a new active view.
+   *
+   * @param view The view to select.
+   *
+   * @throws NullPointerException If the new view is {@code null}.
+   */
+  public void setActiveView(Views view)
+  {
+    if (view == null) {
+      throw new NullPointerException("Active view can't be null");
+    }
+    if (view != m_activeView) {
+      m_tabAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
+    }
+  }
+
+  /**
+   * Returns the currently used address mode.
+   *
+   * @return The currently used address mode.
+   */
+  public AddressMode getAddressMode() { return m_addressMode; }
+  /**
+   * Sets the currently used address mode.
+   *
+   * @param mode The new address mode.
+   *
+   * @throws NullPointerException If the new address mode is {@code null}.
+   */
+  public void setAddressMode(final AddressMode mode)
+  {
+    if (mode == null) {
+      throw new NullPointerException("Address mode can't be null");
+    }
+    if (m_addressMode != mode) {
+      m_addressMode = mode;
+
+      updateOffsetViewWidth();
+      updatePreferredSize();
+
+      repaint();
+    }
+  }
+
+  /**
+   * Returns the number of bytes displayed per column.
+   *
+   * @return The number of bytes displayed per column.
+   */
+  public int getBytesPerColumn() { return m_bytesPerColumn; }
+  /**
+   * Sets the number of bytes displayed per column.
+   *
+   * @param bytes The new number of bytes per column.
+   *
+   * @throws IllegalArgumentException If the new number of bytes is smaller
+   *         than 1 or bigger than the number of bytes per row.
+   */
+  public void setBytesPerColumn(final int bytes)
+  {
+    if (bytes <= 0 || bytes > m_bytesPerRow) {
+      throw new IllegalArgumentException("Invalid number of bytes per column: " + bytes
+        + ", must be in range [1; " + m_bytesPerRow + "]"
+      );
+    }
+    if (m_bytesPerColumn != bytes) {
+      m_bytesPerColumn = bytes;
+
+      updateHexViewWidth();
+      updatePreferredSize();
+      repaint();
+    }
+  }
+
+  /**
+   * Returns the current number of bytes displayed per row.
+   *
+   * @return The current number of bytes displayed per row.
+   */
+  public int getBytesPerRow() { return m_bytesPerRow; }
+  /**
+   * Sets the current number of bytes displayed per row.
+   *
+   * @param value The new number of bytes displayed per row.
+   *
+   * @throws IllegalArgumentException If the new number is smaller than 1.
+   */
+  public void setBytesPerRow(final int value)
+  {
+    if (value <= 0) {
+      throw new IllegalArgumentException("Bytes per row must be positive: " + value);
+    }
+    if (m_bytesPerRow != value) {
+      m_bytesPerRow = value;
+      repaint();
+    }
+  }
+
+  /**
+   * Returns the spacing between columns in pixels.
+   *
+   * @return The spacing between columns.
+   */
+  public int getColumnSpacing() { return m_columnSpacing; }
+  /**
+   * Sets the spacing between columns.
+   *
+   * @param spacing The spacing between columns in pixels.
+   *
+   * @throws IllegalArgumentException If the new spacing is smaller than 1.
+   */
+  public void setColumnSpacing(final int spacing)
+  {
+    if (spacing <= 0) {
+      throw new IllegalArgumentException("Column spacing must be positive: " + spacing);
+    }
+    if (m_columnSpacing != spacing) {
+      m_columnSpacing = spacing;
+      repaint();
+    }
+  }
+
+  /**
+   * Returns the current definition status.
+   *
+   * @return The current definition status.
+   */
+  public DefinitionStatus getDefinitionStatus() { return m_status; }
+  /**
+   * Changes the definition status of the JHexView component. This flag
+   * determines whether real data or {@code ??} are displayed.
+   *
+   * @param status The new definition status.
+   *
+   * @throws NullPointerException If the new definition status is {@code null}.
+   */
+  public void setDefinitionStatus(final DefinitionStatus status)
+  {
+    if (status == null) {
+      throw new NullPointerException("Definition status can't be null");
+    }
+
+    if (m_status != status) {
+      m_status = status;
+      repaint();
+    }
+  }
+
+  /** Returns whether vertical lines between the individual views are visible. */
+  public boolean isSeparatorsVisible() { return m_separatorsVisible; }
+  /**
+   * Shows or hides vertical lines between the individual views.
+   *
+   * @param show The visibility state of vertical lines between the individual views.
+   */
+  public void setSeparatorsVisible(boolean show)
+  {
+    if (show != m_separatorsVisible) {
+      m_separatorsVisible = show;
+
+      repaint();
+    }
+  }
+
+  /**
+   * Returns the current width of the hex view.
+   *
+   * @return The current width of the hex view.
+   */
+  public int getHexViewWidth() { return m_hexViewWidth; }
+  /**
+   * Sets the width of the hex view.
+   *
+   * @param width The new width of the offset view.
+   *
+   * @throws IllegalArgumentException If the new width is smaller than 1.
+   */
+  public void setHexViewWidth(final int width)
+  {
+    if (width <= 0) {
+      throw new IllegalArgumentException("Hex view width must be positive: " + width);
+    }
+    if (m_hexViewWidth != width) {
+      m_hexViewWidth = width;
+
+      repaint();
+    }
+  }
+
+  /**
+   * Returns whether the title header is visible.
+   */
+  public boolean isHeaderVisible() { return m_headerVisible; }
+  /**
+   * Set whether to draw a title header over the hex data.
+   */
+  public void setHeaderVisible(boolean visible)
+  {
+    if (m_headerVisible != visible) {
+      m_headerVisible = visible;
+
+      // The proportions of the hex window change significantly.
+      // Just start over when the next repaint event comes.
+      m_firstDraw = true;
+
+      repaint();
+    }
+  }
+
+  /**
+   * Returns the font style used for header text.
+   *
+   * @return The font style used for header text.
+   *
+   * @see Font#deriveFont(int)
+   */
+  public int getHeaderFontStyle() { return m_headerFontStyle; }
+  /**
+   * Sets the font style used for header text.
+   *
+   * @param style Font style used for header text.
+   *
+   * @see Font#deriveFont(int)
+   */
+  public void setHeaderFontStyle(final int style)
+  {
+    if (style != m_headerFontStyle) {
+      m_headerFontStyle = style;
+      repaint();
+    }
+  }
+
+  /**
+   * Returns whether the byte under the mouse cursor will be highlighted.
+   *
+   * @return The highlighted state of bytes under the current mouse cursor position
+   */
+  public boolean isMouseOverHighlighted() { return m_mouseOverHighlighted; }
+  /**
+   * Enables or disables the highlights state of bytes under the mouse cursor.
+   *
+   * @param highlight The highlighted state of bytes under the mouse cursor.
+   */
+  public void setMouseOverHighlighted(boolean highlight)
+  {
+    if (highlight != m_mouseOverHighlighted) {
+      m_mouseOverHighlighted = highlight;
+      repaint();
+    }
+  }
+
+  /**
+   * Returns a flag that indicates whether the bytes inside a column are
+   * flipped or not.
+   *
+   * @return {@code true}, if the bytes are flipped, {@code false}, otherwise.
+   */
+  public boolean isFlipBytes() { return m_flipBytes; }
+  public void setFlipBytes(final boolean flip)
+  {
+    if (m_flipBytes != flip) {
+      m_flipBytes = flip;
+
+      repaint();
+    }
+  }
+
+  @Override
+  public Font getFont() { return m_font; }
+  @Override
+  public void setFont(Font font)
+  {
+    if (font != m_font) {
+      if (font == null) {
+        font = new Font(GuiHelpers.getMonospaceFont(), Font.PLAIN, getFontSize());
+      }
+      m_font = font;
+      super.setFont(m_font);
+
+      // The proportions of the hex window change significantly.
+      // Just start over when the next repaint event comes.
+      m_firstDraw = true;
+
+      repaint();
+    }
+  }
+
+  /**
+   * Returns the size of the font that is used to draw all data.
+   *
+   * @return The size of the font that is used to draw all data.
+   */
+  @Deprecated
+  public int getFontSize() { return m_font.getSize(); }
+  /**
+   * Sets the size of the font that is used to draw all data.
+   *
+   * @param size The size of the font that is used to draw all data.
+   *
+   * @throws IllegalArgumentException If the new font size is smaller than 1.
+   */
+  @Deprecated
+  public void setFontSize(final int size)
+  {
+    if (size <= 0) {
+      throw new IllegalArgumentException("Font size must be positive: " + size);
+    }
+
+    final Font curFont = getFont();
+    setFont(curFont.deriveFont((float)size));
+  }
+
+  /**
+   * Sets the font style that is used to draw all data.
+   *
+   * @param style The font style that is used to draw all data.
+   */
+  @Deprecated
+  public void setFontStyle(final int style)
+  {
+    final Font curFont = getFont();
+    setFont(curFont.deriveFont(style));
+  }
+
+  /**
+   * Returns the boolean indicating whether this component is editable or not.
+   *
+   * @return {@code true}, if contents of this component can be changed by user.
+   *         {@code false}, otherwise.
+   *
+   * @see #setEditable
+   */
+  public boolean isEditable() { return editable; }
+  /**
+   * Sets the specified boolean to indicate whether or not this component should
+   * be editable.
+   * A PropertyChange event ("editable") is fired when the state is changed.
+   *
+   * @param editable {@code true}, to allow user change content of this element.
+   *
+   * @see #isEditable
+   */
+  public void setEditable(boolean editable)
+  {
+    if (editable != this.editable) {
+      final boolean oldVal = this.editable;
+      this.editable = editable;
+      enableInputMethods(editable);
+      firePropertyChange("editable", Boolean.valueOf(oldVal), Boolean.valueOf(editable));
+      repaint();
+    }
+  }
+
+  /**
+   * Enables or disables the component.
+   *
+   * @param enabled {@code true} to enable the component, {@code false} to disable it.
+   */
+  @Override
+  public void setEnabled(final boolean enabled)
+  {
+    if (enabled && !isEnabled()) {
+      setScrollBarMaximum();
+    }
+    super.setEnabled(enabled);
+  }
+
+  /**
+   * Sets the menu creator of the hex view control.
+   *
+   * @param creator The new menu creator. If this parameter is {@code null},
+   *        no context menu is shown in the component.
+   */
+  public void setMenuCreator(final IMenuCreator creator)
+  {
+    m_menuCreator = creator;
+  }
+  //</editor-fold>
+
+  //<editor-fold defaultstate="collapsed" desc="Data">
+  /**
+   * Returns the currently used data provider.
+   *
+   * @return The currently used data provider.
+   */
+  public IDataProvider getData() { return m_dataProvider; }
+  /**
+   * Sets the current data provider.
+   *
+   * It is valid to pass null as the new data provider. This clears the display.
+   *
+   * @param data The new data provider.
+   */
+  public void setData(final IDataProvider data)
+  {
+    /**
+     * Remove the data listener from the old data source.
+     */
+    if (m_dataProvider != null) {
+      m_dataProvider.removeListener(m_listener);
+    }
+
+    m_dataProvider = data;
+
+    /**
+     * Add a data listener to the new data source so that the component can be
+     * updated when the data changes.
+     */
+    if (data != null) {
+      data.addListener(m_listener);
+    }
+
+    setCurrentPosition(0);
+    setScrollBarMaximum();
+    repaint();
+  }
+
+  /**
+   * Returns the current base address.
+   *
+   * @return The current base address.
+   */
+  public long getBaseAddress() { return m_baseAddress; }
+  /**
+   * Sets the current base address.
+   *
+   * @param baseAddress The current base address.
+   *
+   * @throws IllegalArgumentException If the new base address is negative.
+   */
+  public void setBaseAddress(final long baseAddress)
+  {
+    if (baseAddress < 0) {
+      throw new IllegalArgumentException("Base address can't be negative: 0x" + Long.toHexString(baseAddress));
+    }
+    if (m_baseAddress != baseAddress) {
+      m_baseAddress = baseAddress;
+      repaint();
+    }
+  }
+
+  /**
+   * Returns the first visible offset.
+   *
+   * @return The first visible offset.
+   */
+  public long getFirstVisibleOffset() { return getBaseAddress() + getFirstVisibleByte(); }
+  public long getLastOffset() { return getBaseAddress() + m_dataProvider.getDataLength(); }
+  public int getVisibleBytes()
+  {
+    final int maxVisible = getMaximumVisibleBytes();
+    final int visible = m_dataProvider.getDataLength() - getFirstVisibleByte();
+
+    return visible >= maxVisible ? maxVisible : visible;
+  }
+  //</editor-fold>
+
+  //<editor-fold defaultstate="collapsed" desc="Selection">
+  /**
+   * Returns the offset at the current caret position.
+   *
+   * @return The offset at the current caret position.
+   */
+  public long getCurrentOffset()
+  {
+    final long currentOffset = m_baseAddress + getCurrentNibble() / 2;
+
+    return m_flipBytes ? (currentOffset & -m_bytesPerColumn) + m_bytesPerColumn
+        - (currentOffset % m_bytesPerColumn) - 1 : currentOffset;
+  }
+  /**
+   * Sets the caret to a new offset. Do nothing, if {@link #getData() data provider}
+   * doesn't set.
+   *
+   * @param offset The new offset.
+   */
+  public void setCurrentOffset(final long offset)
+  {
+    if (m_dataProvider == null) {
+      return;
+    }
+
+    final long end = m_baseAddress + m_dataProvider.getDataLength();
+    if (offset < m_baseAddress || offset > end) {
+      throw new IllegalArgumentException("Invalid offset 0x" + Long.toHexString(offset)
+        + ", must be in range [0x" + Long.toHexString(m_baseAddress)
+        + "; 0x" + Long.toHexString(end) + "]"
+      );
+    }
+
+    setCurrentPosition(CHARACTERS_PER_BYTE * (offset - m_baseAddress));
+  }
+
+  /**
+   * Returns the first selected offset.
+   *
+   * @return The first selected offset.
+   */
+  public long getFirstSelectedOffset()
+  {
+    final long start = m_baseAddress + m_selectionStart;
+    return (m_selectionLength >= 0 ? start : start + m_selectionLength) / 2;
+  }
+  /**
+   * Returns the last selected offset.
+   *
+   * @return The last selected offset.
+   */
+  public long getLastSelectedOffset()
+  {
+    // In this method it is necessary to round up. This is because
+    // half a selected byte counts as a fully selected byte.
+    final long start = m_baseAddress + m_selectionStart;
+
+    if (m_selectionLength >= 0) {
+      return (start + m_selectionLength) / 2
+           + (start + m_selectionLength) % 2;
+    }
+    return start / 2
+         + start % 2;
+  }
+
+  public long getSelectionLength() { return m_selectionLength; }
+  public void setSelectionLength(final long selectionLength)
+  {
+    if (selectionLength != m_selectionLength) {
+      m_selectionLength = selectionLength;
+
+      fireHexListener(m_selectionStart, m_selectionLength);
+
+      repaint();
+    }
+  }
+  //</editor-fold>
+
   //<editor-fold defaultstate="collapsed" desc="Private">
   /**
    * Calculates current character and row sizes.
@@ -2854,17 +3397,6 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns a a flag that indicates whether the bytes inside a column are
-   * flipped or not.
-   *
-   * @return True, if the bytes are flipped. False, otherwise.
-   */
-  public boolean doFlipBytes()
-  {
-    return m_flipBytes;
-  }
-
-  /**
    * Attempts to find the next occurrence of keyword in the ascii view of the data,
    * starting at the specified offset.
    * @param offset The start offset for the search.
@@ -2912,209 +3444,6 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns the currently selected view.
-   * @return The currently selected view.
-   */
-  public Views getActiveView()
-  {
-    return m_activeView;
-  }
-
-  /**
-   * Returns the currently used address mode.
-   *
-   * @return The currently used address mode.
-   */
-  public AddressMode getAddressMode()
-  {
-    return m_addressMode;
-  }
-
-  /**
-   * Returns the current base address.
-   *
-   * @return The current base address.
-   */
-  public long getBaseAddress()
-  {
-    return m_baseAddress;
-  }
-
-  /**
-   * Returns the number of bytes displayed per column.
-   *
-   * @return The number of bytes displayed per column.
-   */
-  public int getBytesPerColumn()
-  {
-    return m_bytesPerColumn;
-  }
-
-  /**
-   * Returns the current number of bytes displayed per row.
-   *
-   * @return The current number of bytes displayed per row.
-   */
-  public int getBytesPerRow()
-  {
-    return m_bytesPerRow;
-  }
-
-  /**
-   * Returns the spacing between columns in pixels.
-   *
-   * @return The spacing between columns.
-   */
-  public int getColumnSpacing()
-  {
-    return m_columnSpacing;
-  }
-
-  /**
-   * Returns the offset at the current caret position.
-   *
-   * @return The offset at the current caret position.
-   */
-  public long getCurrentOffset()
-  {
-    final long currentOffset = m_baseAddress + getCurrentNibble() / 2;
-
-    return m_flipBytes ? (currentOffset & -m_bytesPerColumn) + m_bytesPerColumn
-        - (currentOffset % m_bytesPerColumn) - 1 : currentOffset;
-  }
-
-  /**
-   * Returns the currently used data provider.
-   *
-   * @return The currently used data provider.
-   */
-  public IDataProvider getData()
-  {
-    return m_dataProvider;
-  }
-
-  /**
-   * Returns the current definition status.
-   *
-   * @return The current definition status.
-   */
-  public DefinitionStatus getDefinitionStatus()
-  {
-    return m_status;
-  }
-
-  /**
-   * Returns the first selected offset.
-   *
-   * @return The first selected offset.
-   */
-  public long getFirstSelectedOffset()
-  {
-    if (m_selectionLength >= 0) {
-      return (m_baseAddress + m_selectionStart) / 2;
-    }
-    else {
-      return (m_baseAddress + m_selectionStart + m_selectionLength) / 2;
-    }
-  }
-
-  /**
-   * Returns the first visible offset.
-   *
-   * @return The first visible offset.
-   */
-  public long getFirstVisibleOffset()
-  {
-    return getBaseAddress() + getFirstVisibleByte();
-  }
-
-  @Override
-  public Font getFont()
-  {
-    return m_font;
-  }
-
-  /**
-   * Returns the size of the font that is used to draw all data.
-   *
-   * @return The size of the font that is used to draw all data.
-   */
-  public int getFontSize()
-  {
-    return m_font.getSize();
-  }
-
-  /**
-   * Returns the font style used for header text.
-   *
-   * @return The font style used for header text.
-   */
-  public int getHeaderFontStyle()
-  {
-    return m_headerFontStyle;
-  }
-
-  /**
-   * Returns the current width of the hex view.
-   *
-   * @return The current width of the hex view.
-   */
-  public int getHexViewWidth()
-  {
-    return m_hexViewWidth;
-  }
-
-  public long getLastOffset()
-  {
-    return getBaseAddress() + m_dataProvider.getDataLength();
-  }
-
-  /**
-   * Returns the last selected offset.
-   *
-   * @return The last selected offset.
-   */
-  public long getLastSelectedOffset()
-  {
-    // In this method it is necessary to round up. This is because
-    // half a selected byte counts as a fully selected byte.
-
-    if (m_selectionLength >= 0) {
-      return (m_baseAddress + m_selectionStart + m_selectionLength) / 2
-          + (m_baseAddress + m_selectionStart + m_selectionLength) % 2;
-    }
-    else {
-      return (m_baseAddress + m_selectionStart) / 2 + (m_baseAddress + m_selectionStart) % 2;
-    }
-  }
-
-  /**
-   * Returns whether the byte under the mouse cursor will be highlighted.
-   * @return The highlighted state of bytes under the current mouse cursor position
-   */
-  public boolean getMouseOverHighlighted()
-  {
-    return m_mouseOverHighlighted;
-  }
-
-  public long getSelectionLength()
-  {
-    return m_selectionLength;
-  }
-
-  public int getVisibleBytes()
-  {
-    final int visibleBytes = getMaximumVisibleBytes();
-
-    if (m_dataProvider.getDataLength() - getFirstVisibleByte() >= visibleBytes) {
-      return visibleBytes;
-    }
-    else {
-      return m_dataProvider.getDataLength() - getFirstVisibleByte();
-    }
-  }
-
-  /**
    * Scrolls to a given offset.
    *
    * @param offset
@@ -3147,48 +3476,6 @@ public final class JHexView extends JComponent
     }
 
     setCurrentPosition(2 * realOffset);
-  }
-
-  /**
-   * Returns the boolean indicating whether this component is editable or not.
-   *
-   * @return {@code true}, if contents of this component can be changed by user.
-   *         {@code false}, otherwise.
-   *
-   * @see #setEditable
-   */
-  public boolean isEditable() { return editable; }
-  /**
-   * Sets the specified boolean to indicate whether or not this component should
-   * be editable.
-   * A PropertyChange event ("editable") is fired when the state is changed.
-   *
-   * @param editable {@code true}, to allow user change content of this element.
-   *
-   * @see #isEditable
-   */
-  public void setEditable(boolean editable) {
-    if (editable != this.editable) {
-      final boolean oldVal = this.editable;
-      this.editable = editable;
-      enableInputMethods(editable);
-      firePropertyChange("editable", Boolean.valueOf(oldVal), Boolean.valueOf(editable));
-      repaint();
-    }
-  }
-
-  /**
-   * Returns whether the title header is visible.
-   */
-  public boolean isHeaderVisible()
-  {
-    return m_headerVisible;
-  }
-
-  /** Returns whether vertical lines between the individual views are visible. */
-  public boolean isSeparatorsVisible()
-  {
-    return m_separatorsVisible;
   }
 
   /**
@@ -3246,376 +3533,6 @@ public final class JHexView extends JComponent
     m_SelectAllAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
   }
 
-  /**
-   * Selects a new active view.
-   * @param view The view to select.
-   */
-  public void setActiveView(Views view)
-  {
-    if (view != null && view != m_activeView) {
-      m_tabAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
-    }
-  }
-
-  /**
-   * Sets the currently used address mode.
-   *
-   * @param mode
-   *          The new address mode.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new address mode is null.
-   */
-  public void setAddressMode(final AddressMode mode)
-  {
-    if (mode == null) {
-      throw new NullPointerException("Error: Address mode can't be null");
-    }
-
-    m_addressMode = mode;
-
-    updateOffsetViewWidth();
-    updatePreferredSize();
-  }
-
-  /**
-   * Sets the current base address.
-   *
-   * @param baseAddress
-   *          The current base address.
-   *
-   * @throws IllegalArgumentException
-   *           Thrown if the new base address is negative.
-   */
-  public void setBaseAddress(final long baseAddress)
-  {
-    if (baseAddress < 0) {
-      throw new IllegalArgumentException("Error: Base address can't be negative");
-    }
-
-    this.m_baseAddress = baseAddress;
-
-    repaint();
-  }
-
-  /**
-   * Sets the number of bytes displayed per column.
-   *
-   * @param bytes
-   *          The new number of bytes per column.
-   *
-   * @throws IllegalArgumentException
-   *           Thrown if the new number of bytes is smaller than 1 or bigger
-   *           than the number of bytes per row.
-   */
-  public void setBytesPerColumn(final int bytes)
-  {
-    if (bytes <= 0 || bytes > m_bytesPerRow) {
-      throw new IllegalArgumentException("Invalid number of bytes per column: " + bytes
-        + ", must be in range [1; " + m_bytesPerRow + "]"
-      );
-    }
-
-    m_bytesPerColumn = bytes;
-
-    updateHexViewWidth();
-    updatePreferredSize();
-
-    repaint();
-  }
-
-  /**
-   * Sets the current number of bytes displayed per row.
-   *
-   * @param value
-   *          The new number of bytes displayed per row.
-   *
-   * @throws IllegalArgumentException
-   *           Thrown if the new number is smaller than 1.
-   */
-  public void setBytesPerRow(final int value)
-  {
-    if (value <= 0) {
-      throw new IllegalArgumentException("Bytes per row must be positive: " + value);
-    }
-
-    m_bytesPerRow = value;
-
-    repaint();
-  }
-
-  /**
-   * Sets the spacing between columns.
-   *
-   * @param spacing
-   *          The spacing between columns in pixels.
-   *
-   * @throws IllegalArgumentException
-   *           Thrown if the new spacing is smaller than 1.
-   */
-  public void setColumnSpacing(final int spacing)
-  {
-    if (spacing <= 0) {
-      throw new IllegalArgumentException("Spacing must be positive: " + spacing);
-    }
-
-    m_columnSpacing = spacing;
-
-    repaint();
-  }
-
-  /**
-   * Sets the caret to a new offset.
-   *
-   * @param offset
-   *          The new offset.
-   */
-  public void setCurrentOffset(final long offset)
-  {
-    if (m_dataProvider == null) {
-      return;
-    }
-
-    final long end  = m_baseAddress + m_dataProvider.getDataLength();
-    if (offset < m_baseAddress || offset > end) {
-      throw new IllegalArgumentException("Invalid offset 0x" + Long.toHexString(offset)
-        + ", must be in range [0x" + Long.toHexString(m_baseAddress)
-        + "; 0x" + Long.toHexString(end) + "]"
-      );
-    }
-
-    setCurrentPosition(CHARACTERS_PER_BYTE * (offset - m_baseAddress));
-  }
-
-  /**
-   * Sets the current data provider.
-   *
-   * It is valid to pass null as the new data provider. This clears the display.
-   *
-   * @param data
-   *          The new data provider.
-   */
-  public void setData(final IDataProvider data)
-  {
-    /**
-     * Remove the data listener from the old data source.
-     */
-    if (m_dataProvider != null) {
-      m_dataProvider.removeListener(m_listener);
-    }
-
-    m_dataProvider = data;
-
-    /**
-     * Add a data listener to the new data source so that the component can be
-     * updated when the data changes.
-     */
-    if (data != null) {
-      m_dataProvider.addListener(m_listener);
-    }
-
-    setCurrentPosition(0);
-
-    setScrollBarMaximum();
-
-    repaint();
-  }
-
-  /**
-   * Changes the definition status of the JHexView component. This flag
-   * determines whether real data or ?? are displayed.
-   *
-   * @param status
-   *          The new definition status.
-   *
-   * @throws NullPointerException
-   *           Thrown if the new definition status is null.
-   */
-  public void setDefinitionStatus(final DefinitionStatus status)
-  {
-    if (status == null) {
-      throw new NullPointerException("Definition status can't be null");
-    }
-
-    m_status = status;
-
-    repaint();
-  }
-
-  /**
-   * Enables or disables the component.
-   *
-   * @param enabled
-   *          True to enable the component, false to disable it.
-   */
-  @Override
-  public void setEnabled(final boolean enabled)
-  {
-    if (enabled && !isEnabled()) {
-      setScrollBarMaximum();
-    }
-    super.setEnabled(enabled);
-  }
-
-  public void setFlipBytes(final boolean flip)
-  {
-    if (m_flipBytes == flip) {
-      return;
-    }
-
-    m_flipBytes = flip;
-
-    repaint();
-  }
-
-  @Override
-  public void setFont(Font font)
-  {
-    if (font != m_font) {
-      if (font == null) {
-        font = new Font(GuiHelpers.getMonospaceFont(), Font.PLAIN, getFontSize());
-      }
-      m_font = font;
-      super.setFont(m_font);
-
-      // The proportions of the hex window change significantly.
-      // Just start over when the next repaint event comes.
-      m_firstDraw = true;
-
-      repaint();
-    }
-  }
-
-  /**
-   * Sets the size of the font that is used to draw all data.
-   *
-   * @param size
-   *          The size of the font that is used to draw all data.
-   *
-   * @throws IllegalArgumentException
-   *           Thrown if the new font size is smaller than 1.
-   */
-  public void setFontSize(final int size)
-  {
-    if (size <= 0) {
-      throw new IllegalArgumentException("Font size must be positive: " + size);
-    }
-
-    final Font curFont = getFont();
-    setFont(curFont.deriveFont((float)size));
-  }
-
-  /**
-   * Sets the font style that is used to draw all data.
-   *
-   * @param style
-   *          The font style that is used to draw all data.
-   */
-  public void setFontStyle(final int style)
-  {
-    final Font curFont = getFont();
-    setFont(curFont.deriveFont(style));
-  }
-
-  /**
-   * Sets the font style used for header text.
-   *
-   * @param style Font style used for header text.
-   */
-  public void setHeaderFontStyle(final int style)
-  {
-    if (style != m_headerFontStyle) {
-      m_headerFontStyle = style;
-
-      repaint();
-    }
-  }
-
-  /**
-   * Set whether to draw a title header over the hex data
-   * @param set
-   */
-  public void setHeaderVisible(boolean set)
-  {
-    if (m_headerVisible != set) {
-      m_headerVisible = set;
-
-      // The proportions of the hex window change significantly.
-      // Just start over when the next repaint event comes.
-      m_firstDraw = true;
-
-      repaint();
-    }
-  }
-
-  /**
-   * Sets the width of the hex view.
-   *
-   * @param width
-   *          The new width of the offset view.
-   *
-   * @throws IllegalArgumentException
-   *           Thrown if the new width is smaller than 1.
-   */
-  public void setHexViewWidth(final int width)
-  {
-    if (width <= 0) {
-      throw new IllegalArgumentException("Hex view width must be positive: " + width);
-    }
-
-    m_hexViewWidth = width;
-
-    repaint();
-  }
-
-  /**
-   * Sets the menu creator of the hex view control.
-   *
-   * @param creator
-   *          The new menu creator. If this parameter is null, no context menu
-   *          is shown in the component.
-   */
-  public void setMenuCreator(final IMenuCreator creator)
-  {
-    m_menuCreator = creator;
-  }
-
-  /**
-   * Enables or disables the highlights state of bytes under the mouse cursor.
-   * @param highlight The highlighted state of bytes under the mouse cursor.
-   */
-  public void setMouseOverHighlighted(boolean highlight)
-  {
-    if (highlight != m_mouseOverHighlighted) {
-      m_mouseOverHighlighted = highlight;
-      repaint();
-    }
-  }
-
-  public void setSelectionLength(final long selectionLength)
-  {
-    if (selectionLength != m_selectionLength) {
-      m_selectionLength = selectionLength;
-
-      fireHexListener(m_selectionStart, m_selectionLength);
-
-      repaint();
-    }
-  }
-
-  /**
-   * Shows or hides vertical lines between the individual views.
-   * @param show The visibility state of vertical lines between the individual views.
-   */
-  public void setSeparatorsVisible(boolean show)
-  {
-    if (show != m_separatorsVisible) {
-      m_separatorsVisible = show;
-
-      repaint();
-    }
-  }
-
 //  @Override
 //  public void setVisible(boolean aFlag)
 //  {
@@ -3664,6 +3581,7 @@ public final class JHexView extends JComponent
     }
   }
 
+  //<editor-fold defaultstate="collapsed" desc="Internal classes">
   /** Abstract superclass for undoable edits in the JHexView component. */
   public abstract class AbstractEdit extends AbstractUndoableEdit
   {
@@ -4501,4 +4419,5 @@ public final class JHexView extends JComponent
     /** Shortcut associated with the "Undo" action. */
     CTRL_Z
   }
+  //</editor-fold>
 }
