@@ -129,12 +129,19 @@ public final class JHexView extends JComponent
    */
   private final EventListenerList m_listeners = new EventListenerList();
 
+  //<editor-fold defaultstate="collapsed" desc="Modified">
   /**
    * Stores offset values that have been modified by the user.
    * The value indicates how often the data at the position has been modified. (Important when
    * undoing actions).
    */
-  private final TreeMap<Long, Integer> m_modifiedOffsets = new TreeMap<Long, Integer>();
+  private final TreeMap<Long, Integer> m_modifiedOffsets = new TreeMap<>();
+
+  /**
+   * Defines whether to show data that has been modified by the user in a separate color.
+   */
+  private boolean m_showModified = false;
+  //</editor-fold>
 
   /**
    * Manages the undo/redo functionality
@@ -468,11 +475,6 @@ public final class JHexView extends JComponent
    * Determines whether to draw vertical lines between the individual views.
    */
   private boolean m_separatorsVisible = true;
-
-  /**
-   * Defines whether to show data that has been modified by the user in a separate color.
-   */
-  private boolean m_showModified = false;
 
   /**
    * Determines whether to highlight the byte under the mouse cursor.
@@ -1046,6 +1048,137 @@ public final class JHexView extends JComponent
   }
   //</editor-fold>
 
+  //<editor-fold defaultstate="collapsed" desc="Modified">
+  /**
+   * Returns whether to apply a separate color to modified data.
+   *
+   * @return {code true}, if {@link #getFontColorModified()} must be used to draw
+   *         modified data
+   */
+  public boolean isShowModified() { return m_showModified; }
+  /**
+   * Enable whether to show modified data in a separate color.
+   *
+   * @param show If {code true}, {@link #getFontColorModified()} will be used to
+   *        draw modified data
+   */
+  public void setShowModified(boolean show)
+  {
+    if (show != m_showModified) {
+      m_showModified = show;
+
+      repaint();
+    }
+  }
+
+  /**
+   * Returns whether data has been modified by the user.
+   *
+   * @return {@code true} if data has been modified by the user, {@code false} otherwise.
+   */
+  public boolean isModified() { return !m_modifiedOffsets.isEmpty(); }
+
+  /**
+   * Returns whether the value at the specified offset has been modified by the user.
+   *
+   * @param offset The data offset.
+   *
+   * @return {@code true} if the data at the specified {@code offset} has been modified
+   *         by the user, {@code false} otherwise.
+   */
+  public boolean isModified(long offset) { return m_modifiedOffsets.containsKey(offset); }
+
+  /**
+   * Returns the number of modifications done to the data at the specified offset.
+   *
+   * @param offset The offset of the modified data.
+   *
+   * @return Number of modifications done to the data at the specified offset.
+   */
+  public int getModifiedCount(long offset)
+  {
+    final Integer value = m_modifiedOffsets.get(offset);
+    return value != null ? value.intValue() : 0;
+  }
+
+  /**
+   * Returns all offsets of data that has been modified by the user.
+   *
+   * @return An array of offsets of modified data.
+   */
+  public long[] getModifiedOffsets()
+  {
+    long[] retVal = new long[m_modifiedOffsets.size()];
+    if (!m_modifiedOffsets.isEmpty()) {
+      int i = 0;
+      Iterator<Long> iter = m_modifiedOffsets.keySet().iterator();
+      while (iter.hasNext()) {
+        retVal[i] = iter.next().longValue();
+        i++;
+      }
+    }
+    return retVal;
+  }
+
+  /** Clears all offsets that have been marked as modified. */
+  public void clearModified()
+  {
+    if (!m_modifiedOffsets.isEmpty()) {
+      m_modifiedOffsets.clear();
+      if (isShowModified()) {
+        repaint();
+      }
+    }
+  }
+
+  /**
+   * Decrements the number of modifications to the data at the specified offset
+   * or removes it completely.
+   *
+   * @param offset The position of data that has been modified by the user.
+   * @param forceRemove If {@code true}, remove the offset regardless of how many
+   *        times it has been modified.
+   *
+   * @return {@code true} if the data at this offset had been modified, {@code false} otherwise.
+   */
+  private boolean clearModified(long offset, boolean forceRemove)
+  {
+    final Long key = Long.valueOf(offset);
+    final Integer value = m_modifiedOffsets.get(key);
+    if (value != null) {
+      final int newCount = value.intValue() - 1;
+      if (!forceRemove && newCount > 0) {
+        m_modifiedOffsets.put(key, newCount);
+      } else {
+        m_modifiedOffsets.remove(key);
+      }
+      return true;
+    }
+    return false;
+  }
+  /**
+   * Adds the specified offset of the modified data to the list or increment its
+   * use if already existing.
+   *
+   * @param offset The position of data that has been modified by the user.
+   *
+   * @return The number of modifications done to the data at the specified offset before.
+   */
+  private int setModified(long offset)
+  {
+    int retVal = 0;
+    if (offset >= 0L) {
+      Long key = Long.valueOf(offset);
+      Integer value = m_modifiedOffsets.get(key);
+      if (value != null) {
+        retVal = value.intValue();
+      }
+      m_modifiedOffsets.put(key, retVal + 1);
+    }
+    return retVal;
+  }
+  //</editor-fold>
+
   //<editor-fold defaultstate="collapsed" desc="Private">
   /**
    * Calculates current character and row sizes.
@@ -1115,29 +1248,6 @@ public final class JHexView extends JComponent
 
     m_caret.setVisible(true);
     repaint();
-  }
-
-  /**
-   * Decrements the number of modifications to the data at the specified offset or removes it completely.
-   * @param offset The position of data that has been modified by the user.
-   * @param forceRemove If true, remove the offset regardless of how many times it has been modified.
-   * @return True if the data at this offset had been modified, false otherwise.
-   */
-  private boolean clearModified(long offset, boolean forceRemove)
-  {
-    Long key = Long.valueOf(offset);
-    Integer value = m_modifiedOffsets.get(key);
-    if (value != null) {
-      if (value.intValue() > 1 && forceRemove == false) {
-        value = Integer.valueOf(value.intValue() - 1);
-        m_modifiedOffsets.put(key, value);
-      } else {
-        m_modifiedOffsets.remove(key);
-      }
-      return true;
-    } else {
-      return false;
-    }
   }
 
   /**
@@ -2542,26 +2652,6 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Adds the specified offset of the modified data to the list or increment its use if already existing.
-   * @param offset The position of data that has been modified by the user.
-   * @return The number of modifications done to the data at the specified offset before.
-   */
-  private int setModified(long offset)
-  {
-    int retVal = 0;
-    if (offset >= 0L) {
-      Long key = Long.valueOf(offset);
-      Integer value = m_modifiedOffsets.get(key);
-      if (value != null) {
-        retVal = value.intValue();
-      }
-      value = Integer.valueOf(retVal + 1);
-      m_modifiedOffsets.put(key, value);
-    }
-    return retVal;
-  }
-
-  /**
    * Updates the maximum scroll range of the scroll bar depending on the number
    * of bytes in the current data set.
    */
@@ -2736,16 +2826,6 @@ public final class JHexView extends JComponent
     }
 
     m_listeners.add(IHexViewListener.class, listener);
-  }
-
-  /**
-   * Clears all offsets that have been marked as modified.
-   */
-  public void clearModified()
-  {
-    m_modifiedOffsets.clear();
-
-    repaint();
   }
 
   public void dispose()
@@ -3009,39 +3089,6 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns the number of modifications done to the data at the specified offset.
-   * @param offset The offset of the modified data.
-   * @return Number of modifications done to the data at the specified offset.
-   */
-  public int getModifiedCount(long offset)
-  {
-    Integer value = m_modifiedOffsets.get(Long.valueOf(offset));
-    if (value != null) {
-      return value.intValue();
-    } else {
-      return 0;
-    }
-  }
-
-  /**
-   * Returns all offsets of data that has been modified by the user.
-   * @return An array of offsets of modified data.
-   */
-  public long[] getModifiedOffsets()
-  {
-    long[] retVal = new long[m_modifiedOffsets.size()];
-    if (!m_modifiedOffsets.isEmpty()) {
-      int i = 0;
-      Iterator<Long> iter = m_modifiedOffsets.keySet().iterator();
-      while (iter.hasNext()) {
-        retVal[i] = iter.next().longValue();
-        i++;
-      }
-    }
-    return retVal;
-  }
-
-  /**
    * Returns whether the byte under the mouse cursor will be highlighted.
    * @return The highlighted state of bytes under the current mouse cursor position
    */
@@ -3138,37 +3185,10 @@ public final class JHexView extends JComponent
     return m_headerVisible;
   }
 
-  /**
-   * Returns whether data has been modified by the user.
-   * @return True if data has been modified by the user, false otherwise.
-   */
-  public boolean isModified()
-  {
-    return !m_modifiedOffsets.isEmpty();
-  }
-
-  /**
-   * Returns whether the value at the specified offset has been modified by the user.
-   * @param offset The data offset.
-   * @return True if the data at the specified offset has been modified by the user, false otherwise.
-   */
-  public boolean isModified(long offset)
-  {
-    return m_modifiedOffsets.containsKey(Long.valueOf(offset));
-  }
-
   /** Returns whether vertical lines between the individual views are visible. */
   public boolean isSeparatorsVisible()
   {
     return m_separatorsVisible;
-  }
-
-  /**
-   * Returns whether to apply a separate color to modified data.
-   */
-  public boolean isShowModified()
-  {
-    return m_showModified;
   }
 
   /**
@@ -3591,19 +3611,6 @@ public final class JHexView extends JComponent
   {
     if (show != m_separatorsVisible) {
       m_separatorsVisible = show;
-
-      repaint();
-    }
-  }
-
-  /**
-   * Enable whether to show modified data in a separate color.
-   * @param show
-   */
-  public void setShowModified(boolean show)
-  {
-    if (show != m_showModified) {
-      m_showModified = show;
 
       repaint();
     }
