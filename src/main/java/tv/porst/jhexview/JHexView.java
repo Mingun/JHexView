@@ -979,6 +979,73 @@ public final class JHexView extends JComponent
   }
   //</editor-fold>
 
+  //<editor-fold defaultstate="collapsed" desc="Undo/Redo">
+  /** Returns whether an undo is possible. */
+  public boolean canUndo() { return m_undo.canUndo(); }
+  /** Performs an undo action if available. */
+  public void undo() { if (canUndo()) { m_undo.undo(); } }
+  /**
+   * Returns the name of the last undoable action added to the list.
+   *
+   * @return Name of action or empty string, if nothing to undo
+   */
+  public String getUndoPresentationName()
+  {
+    return canUndo() ? m_undo.getUndoPresentationName() : "";
+  }
+
+  /** Returns whether a redo is possible. */
+  public boolean canRedo() { return m_undo.canRedo(); }
+  /** Performs a redo action if available. */
+  public void redo() { if (canRedo()) { m_undo.redo(); } }
+  /**
+   * Returns the name of the last redoable action added to the list.
+   *
+   * @return Name of action or empty string, if nothing to redo
+   */
+  public String getRedoPresentationName()
+  {
+    return canRedo() ? m_undo.getRedoPresentationName() : "";
+  }
+
+  /** Removes all undoable edit actions from the list. */
+  public void resetUndo() { m_undo.die(); }
+
+  public void addUndoableEditListener(UndoableEditListener listener)
+  {
+    if (listener == null) {
+      throw new NullPointerException("UndoableEditListener can't be null");
+    }
+
+    m_listeners.add(UndoableEditListener.class, listener);
+  }
+  public void removeUndoableEditListener(UndoableEditListener listener)
+  {
+    if (listener == null) {
+      throw new NullPointerException("UndoableEditListener can't be null");
+    }
+
+    m_listeners.remove(UndoableEditListener.class, listener);
+  }
+
+  /**
+   * Notifies all registered UndoableEditListeners that an undoable event has been triggered.
+   */
+  private void fireUndoableEditListener(UndoableEdit edit)
+  {
+    UndoableEditEvent event = null;
+    Object[] l = m_listeners.getListenerList();
+    for (int i = l.length - 2; i >= 0; i -= 2) {
+      if (l[i] == UndoableEditListener.class) {
+        if (event == null) {
+          event = new UndoableEditEvent(this, edit);
+        }
+        ((UndoableEditListener)l[i+1]).undoableEditHappened(event);
+      }
+    }
+  }
+  //</editor-fold>
+
   //<editor-fold defaultstate="collapsed" desc="Private">
   /**
    * Calculates current character and row sizes.
@@ -1785,23 +1852,6 @@ public final class JHexView extends JComponent
           event = new HexViewEvent(this, start, length);
         }
         ((IHexViewListener)l[i+1]).stateChanged(event);
-      }
-    }
-  }
-
-  /**
-   * Notifies all registered UndoableEditListeners that an undoable event has been triggered.
-   */
-  private void fireUndoableEditListener(UndoableEdit edit)
-  {
-    UndoableEditEvent event = null;
-    Object[] l = m_listeners.getListenerList();
-    for (int i = l.length - 2; i >= 0; i -= 2) {
-      if (l[i] == UndoableEditListener.class) {
-        if (event == null) {
-          event = new UndoableEditEvent(this, edit);
-        }
-        ((UndoableEditListener)l[i+1]).undoableEditHappened(event);
       }
     }
   }
@@ -2688,15 +2738,6 @@ public final class JHexView extends JComponent
     m_listeners.add(IHexViewListener.class, listener);
   }
 
-  public void addUndoableEditListener(UndoableEditListener listener)
-  {
-    if (listener == null) {
-      throw new NullPointerException("UndoableEditListener can't be null");
-    }
-
-    m_listeners.add(UndoableEditListener.class, listener);
-  }
-
   /**
    * Clears all offsets that have been marked as modified.
    */
@@ -2719,18 +2760,6 @@ public final class JHexView extends JComponent
     m_caret.removeListener(m_listener);
 
     m_caret.stop();
-  }
-
-  /** Returns whether a redo is possible. */
-  public boolean canRedo()
-  {
-    return m_undo.canRedo();
-  }
-
-  /** Returns whether an undo is possible. */
-  public boolean canUndo()
-  {
-    return m_undo.canUndo();
   }
 
   /**
@@ -3021,29 +3050,9 @@ public final class JHexView extends JComponent
     return m_mouseOverHighlighted;
   }
 
-  /** Returns the name of the last redoable action added to the list. */
-  public String getRedoPresentationName()
-  {
-    if (canRedo()) {
-      return m_undo.getRedoPresentationName();
-    } else {
-      return "";
-    }
-  }
-
   public long getSelectionLength()
   {
     return m_selectionLength;
-  }
-
-  /** Returns the name of the last undoable action added to the list. */
-  public String getUndoPresentationName()
-  {
-    if (canUndo()) {
-      return m_undo.getUndoPresentationName();
-    } else {
-      return "";
-    }
   }
 
   public int getVisibleBytes()
@@ -3171,20 +3180,6 @@ public final class JHexView extends JComponent
     m_PasteTextAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
   }
 
-  /** Performs a redo action if available. */
-  public void redo()
-  {
-    if (canRedo()) {
-      m_undo.redo();
-    }
-  }
-
-  /** Removes all undoable edit actions from the list. */
-  public void resetUndo()
-  {
-    m_undo.die();
-  }
-
   /**
    * Registers the specified shortcut for its predefined action.
    * @param shortcut The shortcut to register.
@@ -3221,15 +3216,6 @@ public final class JHexView extends JComponent
     }
 
     m_listeners.remove(IHexViewListener.class, listener);
-  }
-
-  public void removeUndoableEditListener(UndoableEditListener listener)
-  {
-    if (listener == null) {
-      throw new NullPointerException("Error: Listener can't be null");
-    }
-
-    m_listeners.remove(UndoableEditListener.class, listener);
   }
 
   /**
@@ -3641,14 +3627,6 @@ public final class JHexView extends JComponent
 //      }
 //    }
 //  }
-
-  /** Performs an undo action if available. */
-  public void undo()
-  {
-    if (canUndo()) {
-      m_undo.undo();
-    }
-  }
 
   /**
    * Unregisters the specified shortcut. Associated action will not be executed on shortcut afterwards.
