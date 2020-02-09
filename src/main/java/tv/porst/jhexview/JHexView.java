@@ -359,6 +359,7 @@ public final class JHexView extends JComponent
    */
   private final InternalListener m_listener = new InternalListener();
 
+  //<editor-fold defaultstate="collapsed" desc="Actions">
   /**
    * Action that's executed when the user presses the left arrow key.
    */
@@ -458,6 +459,7 @@ public final class JHexView extends JComponent
   private final ActionShortcut m_RedoAction =
       new ActionShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_Y,
                                                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+  //</editor-fold>
 
   private int m_lastHighlightedNibble;
 
@@ -1871,8 +1873,8 @@ public final class JHexView extends JComponent
     }
 
     if (getCurrentOffset() == offset) {
-      if (!isPositionVisible(getSelectionStart())) {
-        scrollToPosition(getSelectionStart());
+      if (!isPositionVisible(m_selectionStart)) {
+        scrollToPosition(m_selectionStart);
       }
       return;
     }
@@ -1913,26 +1915,26 @@ public final class JHexView extends JComponent
   private void changeBy(final ActionEvent event, final int length)
   {
     if ((event.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) {
-      if (getSelectionStart() + getSelectionLength() + length < 0) {
-        setSelectionLength(-getSelectionStart());
+      if (m_selectionStart + getSelectionLength() + length < 0) {
+        setSelectionLength(-m_selectionStart);
       }
       else {
-        if (getSelectionStart() + getSelectionLength() + length < 2 * m_dataProvider
+        if (m_selectionStart + getSelectionLength() + length < 2 * m_dataProvider
             .getDataLength()) {
           setSelectionLength(getSelectionLength() + length);
         }
         else {
-          setSelectionLength(2 * m_dataProvider.getDataLength() - getSelectionStart());
+          setSelectionLength(2 * m_dataProvider.getDataLength() - m_selectionStart);
         }
       }
     }
     else {
-      if (getSelectionStart() + getSelectionLength() + length < 0) {
+      if (m_selectionStart + getSelectionLength() + length < 0) {
         setSelectionStart(0);
       }
-      else if (getSelectionStart() + getSelectionLength() + length < 2 * m_dataProvider
+      else if (m_selectionStart + getSelectionLength() + length < 2 * m_dataProvider
           .getDataLength()) {
-        setSelectionStart(getSelectionStart() + getSelectionLength() + length);
+        setSelectionStart(m_selectionStart + getSelectionLength() + length);
       }
       else {
         setSelectionStart(2 * m_dataProvider.getDataLength());
@@ -1941,7 +1943,7 @@ public final class JHexView extends JComponent
       setSelectionLength(0);
     }
 
-    final long newPosition = getSelectionStart() + getSelectionLength();
+    final long newPosition = m_selectionStart + getSelectionLength();
 
     if (newPosition < 2 * getFirstVisibleByte()) {
       scrollToPosition(newPosition);
@@ -2835,7 +2837,7 @@ public final class JHexView extends JComponent
    */
   private long getCurrentNibble()
   {
-    return getSelectionStart() + getSelectionLength();
+    return m_selectionStart + getSelectionLength();
   }
 
   /**
@@ -3135,11 +3137,6 @@ public final class JHexView extends JComponent
     return g.getFontMetrics().getHeight();
   }
 
-  private long getSelectionStart()
-  {
-    return m_selectionStart;
-  }
-
   /**
    * Initializes the keys that can be used by the user inside the component.
    */
@@ -3311,12 +3308,12 @@ public final class JHexView extends JComponent
       return false;
     }
     else if (getSelectionLength() > 0) {
-      return currentOffset >= getSelectionStart() / 2
-          && 2 * currentOffset < getSelectionStart() + getSelectionLength();
+      return currentOffset >= m_selectionStart / 2
+          && 2 * currentOffset < m_selectionStart + getSelectionLength();
     }
     else {
-      return currentOffset >= (getSelectionStart() + getSelectionLength()) / 2
-          && 2 * currentOffset < getSelectionStart();
+      return currentOffset >= (m_selectionStart + getSelectionLength()) / 2
+          && 2 * currentOffset < m_selectionStart;
     }
   }
 
@@ -3354,11 +3351,11 @@ public final class JHexView extends JComponent
     // setSelectionStart(newPosition);
     m_selectionStart = newPosition; // Avoid notifying twice
 
-    if (!isPositionVisible(getSelectionStart())) {
-      scrollToPosition(getSelectionStart());
+    if (!isPositionVisible(m_selectionStart)) {
+      scrollToPosition(m_selectionStart);
     }
 
-    fireHexListener(getSelectionStart(), 0);
+    fireHexListener(m_selectionStart, 0);
   }
 
   /**
@@ -3654,7 +3651,7 @@ public final class JHexView extends JComponent
     {
       if (modifier == 0 && getSelectionLength() != 0) {
         long cur = getCurrentNibble();
-        long start = Math.min(getSelectionStart(), getSelectionStart()+getSelectionLength()) & ~1L;
+        long start = Math.min(m_selectionStart, m_selectionStart+getSelectionLength()) & ~1L;
         int p = (int)(cur - start);
         changeBy(event, -p);
       } else {
@@ -3702,7 +3699,7 @@ public final class JHexView extends JComponent
     {
       if (modifier == 0 && getSelectionLength() != 0) {
         long cur = getCurrentNibble();
-        long start = (Math.max(getSelectionStart(), getSelectionStart()+getSelectionLength())+1) & ~1L;
+        long start = (Math.max(m_selectionStart, m_selectionStart+getSelectionLength())+1) & ~1L;
         int p = (int)(start - cur);
         changeBy(event, p);
       } else {
@@ -3769,7 +3766,7 @@ public final class JHexView extends JComponent
 
       if (m_activeView == Views.HEX_VIEW) {
         m_activeView = Views.ASCII_VIEW;
-        setSelectionStart(getSelectionStart() - getSelectionStart() % 2);
+        setSelectionStart(m_selectionStart - m_selectionStart % 2);
       }
       else {
         m_activeView = Views.HEX_VIEW;
@@ -3937,7 +3934,7 @@ public final class JHexView extends JComponent
         StringBuilder sb = new StringBuilder();
 
         // preparing data
-        long ofs = hv.getSelectionStart() / 2L;
+        long ofs = hv.m_selectionStart / 2L;
         int len = (int)hv.getSelectionLength() / 2;
         if (ofs+len > getData().getDataLength()) {
           len = (int)(getData().getDataLength() - ofs);
@@ -3984,7 +3981,7 @@ public final class JHexView extends JComponent
 
     private void keyPressedInAsciiView(char ch)
     {
-      if (getSelectionStart() >= m_dataProvider.getDataLength() * 2) {
+      if (m_selectionStart >= m_dataProvider.getDataLength() * 2) {
         return;
       }
       final long offset = getCurrentOffset();
@@ -4016,7 +4013,7 @@ public final class JHexView extends JComponent
         return;
       }
 
-      if (getSelectionStart() >= m_dataProvider.getDataLength() * 2) {
+      if (m_selectionStart >= m_dataProvider.getDataLength() * 2) {
         return;
       }
 
@@ -4027,7 +4024,7 @@ public final class JHexView extends JComponent
         return;
       }
 
-      final long pos = m_baseAddress + getSelectionStart();
+      final long pos = m_baseAddress + m_selectionStart;
 
       final byte oldValue = data[0];
       final byte newValue;
@@ -4180,7 +4177,7 @@ public final class JHexView extends JComponent
         else if (y >= m_rowHeight * getNumberOfVisibleRows()) {
           scrollToPosition(2 * getFirstVisibleByte() + 2 * m_bytesPerRow);
 
-          if (getSelectionLength() + 2 * m_bytesPerRow > 2 * (m_dataProvider.getDataLength() - getSelectionStart())) {
+          if (getSelectionLength() + 2 * m_bytesPerRow > 2 * (m_dataProvider.getDataLength() - m_selectionStart)) {
             return;
           }
 
@@ -4190,7 +4187,7 @@ public final class JHexView extends JComponent
           final int position = getNibbleAtCoordinate(x, y);
 
           if (position != -1) {
-            setSelectionLength(position - getSelectionStart());
+            setSelectionLength(position - m_selectionStart);
             repaint();
           }
         }
