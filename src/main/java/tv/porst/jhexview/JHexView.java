@@ -16,6 +16,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Event;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.KeyboardFocusManager;
@@ -1897,17 +1898,17 @@ public final class JHexView extends JComponent
    */
   private void calculateSizes()
   {
-    Graphics g = getGraphics();
+    final Graphics g = getGraphics();
     if (g != null) {
       try {
-        m_rowHeight = getRowHeight(g);
-        m_charHeight = getCharAscent(g);
-        m_charMaxAscent = getCharMaxAscent(g);
-        m_charMaxDescent = getCharMaxDescent(g);
+        final FontMetrics m = g.getFontMetrics();
+        m_rowHeight      = m.getHeight();
+        m_charHeight     = m.getAscent();
+        m_charMaxAscent  = m.getMaxAscent();
+        m_charMaxDescent = m.getMaxDescent();
         m_charWidth = getCharacterWidth(g);
       } finally {
         g.dispose();
-        g = null;
       }
     }
   }
@@ -2777,40 +2778,6 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Determines the positive height (ascent) of a character in a graphical context.
-   *
-   * @param g
-   *          The graphical context.
-   *
-   * @return The positive height of a character in the graphical context.
-   */
-  private int getCharAscent(final Graphics g)
-  {
-    return g.getFontMetrics().getAscent();
-  }
-
-  /**
-   * Determines the maximum positive height (ascent) of a character in a graphical context.
-   *
-   * @param g The graphical context.
-   * @return The maximum positive height of a character in the graphical context.
-   */
-  private int getCharMaxAscent(final Graphics g)
-  {
-    return g.getFontMetrics().getMaxAscent();
-  }
-
-  /**
-   * Determines the maximum negative height (descent) of a character in a graphical context.
-   * @param g The graphical context.
-   * @return The maximum negative height in the graphical context.
-   */
-  private int getCharMaxDescent(final Graphics g)
-  {
-    return g.getFontMetrics().getMaxDescent();
-  }
-
-  /**
    * Returns the size of a hex view column in pixels (includes column spacing).
    *
    * @return The size of a hex view column in pixels.
@@ -2875,19 +2842,18 @@ public final class JHexView extends JComponent
    */
   private int getHeaderHeight()
   {
-    int retVal = 0;
     if (m_headerVisible) {
-      Graphics g = getGraphics();
+      final Graphics g = getGraphics();
       if (g != null) {
         try {
-          retVal = getCharMaxAscent(g) + getCharMaxDescent(g);
+          final FontMetrics m = g.getFontMetrics();
+          return m.getMaxAscent() + m.getMaxDescent();
         } finally {
           g.dispose();
-          g = null;
         }
       }
     }
-    return retVal;
+    return 0;
   }
 
   /**
@@ -3122,19 +3088,6 @@ public final class JHexView extends JComponent
   {
     final int rawHeight = getHeight() - m_paddingTop - getHeaderHeight() - m_horizontalScrollbar.getHeight();
     return rawHeight / m_rowHeight + (rawHeight % m_rowHeight == 0 ? 0 : 1);
-  }
-
-  /**
-   * Determines the height of the current font in a graphical context.
-   *
-   * @param g
-   *          The graphical context.
-   *
-   * @return The height of the current font in the graphical context.
-   */
-  private int getRowHeight(final Graphics g)
-  {
-    return g.getFontMetrics().getHeight();
   }
 
   /**
