@@ -1913,34 +1913,42 @@ public final class JHexView extends JComponent
     }
   }
 
-  private void changeBy(final ActionEvent event, final int length)
+  private void changeBy(final ActionEvent event, final long length)
   {
-    if ((event.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) {
-      if (m_selectionStart + getSelectionLength() + length < 0) {
+    changeBy((event.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK, length);
+  }
+  /**
+   * Changes or expands selection.
+   *
+   * @param expandSelection If {@code true}, expand or reduce selection, otherwise
+   *        just select one nibble
+   * @param length The number of nibbles by which the cursor moved
+   */
+  private void changeBy(boolean expandSelection, final long length)
+  {
+    final long end = m_selectionStart + getSelectionLength() + length;
+    if (expandSelection) {
+      if (end < 0) {
         setSelectionLength(-m_selectionStart);
-      }
-      else {
-        if (m_selectionStart + getSelectionLength() + length < 2 * m_dataProvider
-            .getDataLength()) {
+      } else {
+        final int nibbleCount = 2 * m_dataProvider.getDataLength();
+        if (end < nibbleCount) {
           setSelectionLength(getSelectionLength() + length);
-        }
-        else {
-          setSelectionLength(2 * m_dataProvider.getDataLength() - m_selectionStart);
+        } else {
+          setSelectionLength(nibbleCount - m_selectionStart);
         }
       }
-    }
-    else {
-      if (m_selectionStart + getSelectionLength() + length < 0) {
+    } else {
+      if (end < 0) {
         setSelectionStart(0);
+      } else {
+        final int nibbleCount = 2 * m_dataProvider.getDataLength();
+        if (end < nibbleCount) {
+          setSelectionStart(end);
+        } else {
+          setSelectionStart(nibbleCount);
+        }
       }
-      else if (m_selectionStart + getSelectionLength() + length < 2 * m_dataProvider
-          .getDataLength()) {
-        setSelectionStart(m_selectionStart + getSelectionLength() + length);
-      }
-      else {
-        setSelectionStart(2 * m_dataProvider.getDataLength());
-      }
-
       setSelectionLength(0);
     }
 
@@ -1948,8 +1956,8 @@ public final class JHexView extends JComponent
 
     if (newPosition < 2 * getFirstVisibleByte()) {
       scrollToPosition(newPosition);
-    }
-    else if (newPosition >= 2 * (getFirstVisibleByte() + getMaximumVisibleBytes())) {
+    } else
+    if (newPosition >= 2 * (getFirstVisibleByte() + getMaximumVisibleBytes())) {
 
       final long invisibleNibbles = newPosition - 2
           * (getFirstVisibleByte() + getMaximumVisibleBytes());
@@ -3513,7 +3521,7 @@ public final class JHexView extends JComponent
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-      changeBy(event, 2 * m_bytesPerRow);
+      changeBy(event, 2L * m_bytesPerRow);
     }
   }
 
@@ -3531,13 +3539,13 @@ public final class JHexView extends JComponent
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-      long change;
+      final long change;
       if (isCtrl) {
         change = getData().getDataLength()*2 - getCurrentNibble() - 2;
       } else {
         change = (m_bytesPerRow*2) - (getCurrentNibble() % (m_bytesPerRow*2)) - 2;
       }
-      changeBy(event, (int)change);
+      changeBy(event, change);
     }
   }
 
@@ -3555,13 +3563,13 @@ public final class JHexView extends JComponent
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-      long change;
+      final long change;
       if (isCtrl) {
         change = -getCurrentNibble();
       } else {
         change = -(getCurrentNibble() % (m_bytesPerRow*2));
       }
-      changeBy(event, (int)change);
+      changeBy(event, change);
     }
   }
 
@@ -3581,12 +3589,11 @@ public final class JHexView extends JComponent
     public void actionPerformed(final ActionEvent event)
     {
       if (modifier == 0 && getSelectionLength() != 0) {
-        long cur = getCurrentNibble();
-        long start = Math.min(m_selectionStart, m_selectionStart+getSelectionLength()) & ~1L;
-        int p = (int)(cur - start);
-        changeBy(event, -p);
+        final long cur = getCurrentNibble();
+        final long start = Math.min(m_selectionStart, m_selectionStart+getSelectionLength()) & ~1L;
+        changeBy(event, start - cur);
       } else {
-        changeBy(event, m_activeView == Views.HEX_VIEW ? -1 : -2);
+        changeBy(event, m_activeView == Views.HEX_VIEW ? -1L : -2L);
       }
     }
   }
@@ -3598,7 +3605,7 @@ public final class JHexView extends JComponent
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-      changeBy(event, getNumberOfVisibleRows() * m_bytesPerRow * 2);
+      changeBy(event, 2L * getNumberOfVisibleRows() * m_bytesPerRow);
     }
   }
 
@@ -3609,7 +3616,7 @@ public final class JHexView extends JComponent
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-      changeBy(event, -getNumberOfVisibleRows() * m_bytesPerRow * 2);
+      changeBy(event, -2L * getNumberOfVisibleRows() * m_bytesPerRow);
     }
   }
 
@@ -3629,12 +3636,11 @@ public final class JHexView extends JComponent
     public void actionPerformed(final ActionEvent event)
     {
       if (modifier == 0 && getSelectionLength() != 0) {
-        long cur = getCurrentNibble();
-        long start = (Math.max(m_selectionStart, m_selectionStart+getSelectionLength())+1) & ~1L;
-        int p = (int)(start - cur);
-        changeBy(event, p);
+        final long cur = getCurrentNibble();
+        final long start = (Math.max(m_selectionStart, m_selectionStart+getSelectionLength())+1) & ~1L;
+        changeBy(event, start - cur);
       } else {
-        changeBy(event, m_activeView == Views.HEX_VIEW ? 1 : 2);
+        changeBy(event, m_activeView == Views.HEX_VIEW ? 1L : 2L);
       }
     }
   }
@@ -3716,7 +3722,7 @@ public final class JHexView extends JComponent
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-      changeBy(event, -2 * m_bytesPerRow);
+      changeBy(event, -2L * m_bytesPerRow);
     }
   }
 
@@ -3933,7 +3939,8 @@ public final class JHexView extends JComponent
       // register as undoable action
       fireUndoableEditListener(new DataEdit(offset, oldValue, newValue, getActiveView()));
 
-      changeBy(new ActionEvent(this, 0, "", 0), 2);
+      // Select one byte
+      changeBy(false, 2L);
     }
 
     private void keyPressedInHexView(char ch)
@@ -3974,7 +3981,8 @@ public final class JHexView extends JComponent
       // register as undoable action
       fireUndoableEditListener(new DataEdit(offset, oldValue, newValue, getActiveView()));
 
-      changeBy(new ActionEvent(this, 0, "", 0), 1);
+      // Select one nibble
+      changeBy(false, 1L);
     }
 
     private void showPopupMenu(final MouseEvent event)
