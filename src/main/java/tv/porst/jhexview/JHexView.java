@@ -1782,6 +1782,27 @@ public final class JHexView extends JComponent
   }
   //</editor-fold>
 
+  //<editor-fold defaultstate="collapsed" desc="Copy/Paste">
+  /**
+   * Transfers the currently selected range of data to the system clipboard.
+   * Does nothing if no selection is available.
+   */
+  public void copy()
+  {
+    if (getSelectionLength() > 0) {
+      m_CopyTextAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
+    }
+  }
+  /**
+   * Transfers the contents of the system clipboard into the hex viewer. Data starting at the current
+   * cursor position will be overwritten.
+   */
+  public void paste()
+  {
+    m_PasteTextAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
+  }
+  //</editor-fold>
+
   //<editor-fold defaultstate="collapsed" desc="Private">
   /**
    * Calculates current character and row sizes.
@@ -3427,16 +3448,6 @@ public final class JHexView extends JComponent
     m_caret.stop();
   }
 
-  /**
-   * Transfers the currently selected range of data to the system clipboard.
-   * Does nothing if no selection is available.
-   */
-  public void copy()
-  {
-    if (getSelectionLength() > 0) {
-      m_CopyTextAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
-    }
-  }
 
   /**
    * Attempts to find the next occurrence of keyword in the ascii view of the data,
@@ -3518,15 +3529,6 @@ public final class JHexView extends JComponent
     }
 
     setCurrentPosition(2 * realOffset);
-  }
-
-  /**
-   * Transfers the contents of the system clipboard into the hex viewer. Data starting at the current
-   * cursor position will be overwritten.
-   */
-  public void paste()
-  {
-    m_PasteTextAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
   }
 
   /**
