@@ -3542,25 +3542,6 @@ public final class JHexView extends JComponent
     m_SelectAllAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
   }
 
-//  @Override
-//  public void setVisible(boolean aFlag)
-//  {
-//    if (aFlag != super.isVisible()) {
-//      if (aFlag == true) {
-//        updateCanvas(false);
-//        super.setVisible(aFlag);
-//      } else {
-//        super.setVisible(aFlag);
-//        if (bufferGraphics != null) {
-//          bufferGraphics.dispose();
-//        }
-//        bufferGraphics = null;
-//        img.flush();
-//        img = null;
-//      }
-//    }
-//  }
-
   //<editor-fold defaultstate="collapsed" desc="Internal classes">
   /** Abstract superclass for undoable edits in the JHexView component. */
   public abstract class AbstractEdit extends AbstractUndoableEdit
