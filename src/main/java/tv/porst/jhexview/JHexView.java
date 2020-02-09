@@ -1745,6 +1745,43 @@ public final class JHexView extends JComponent
   }
   //</editor-fold>
 
+  //<editor-fold defaultstate="collapsed" desc="HEX Listener">
+  /**
+   * Adds a new event listener to the list of event listeners.
+   *
+   * @param listener The new event listener
+   *
+   * @throws NullPointerException If the listener argument is {@code null}
+   *
+   * @see #removeHexListener
+   */
+  public void addHexListener(final IHexViewListener listener)
+  {
+    if (listener == null) {
+      throw new NullPointerException("IHexViewListener can't be null");
+    }
+
+    m_listeners.add(IHexViewListener.class, listener);
+  }
+  /**
+   * Remove event listener from list of event listeners.
+   *
+   * @param listener The listener to remove
+   *
+   * @throws NullPointerException If the listener argument is {@code null}
+   *
+   * @see #addHexListener
+   */
+  public void removeHexListener(final IHexViewListener listener)
+  {
+    if (listener == null) {
+      throw new NullPointerException("IHexViewListener can't be null");
+    }
+
+    m_listeners.remove(IHexViewListener.class, listener);
+  }
+  //</editor-fold>
+
   //<editor-fold defaultstate="collapsed" desc="Private">
   /**
    * Calculates current character and row sizes.
@@ -3376,24 +3413,6 @@ public final class JHexView extends JComponent
     }
   }
 
-  /**
-   * Adds a new event listener to the list of event listeners.
-   *
-   * @param listener
-   *          The new event listener.
-   *
-   * @throws NullPointerException
-   *           Thrown if the listener argument is null.
-   */
-  public void addHexListener(final IHexViewListener listener)
-  {
-    if (listener == null) {
-      throw new NullPointerException("IHexViewListener can't be null");
-    }
-
-    m_listeners.add(IHexViewListener.class, listener);
-  }
-
   public void dispose()
   {
     removeMouseListener(m_listener);
@@ -3508,15 +3527,6 @@ public final class JHexView extends JComponent
   public void paste()
   {
     m_PasteTextAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
-  }
-
-  public void removeHexListener(final IHexViewListener listener)
-  {
-    if (listener == null) {
-      throw new NullPointerException("Error: Listener can't be null");
-    }
-
-    m_listeners.remove(IHexViewListener.class, listener);
   }
 
   /**
