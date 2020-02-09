@@ -17,6 +17,8 @@ v2.0
 - `getFontSize` removed. Use `getFont().getSize()`
 - `setFontSize` removed. Use `setFont(getFont().deriveFont((float)getFont().getSize()))`
 - `setFontStyle` removed. Use `setFont(getFont().deriveFont(...))`
+- `findAscii/findHex` now throws NPE if search pattern is `null` instead of returning
+  start offset for search
 
 v1.1
 ====

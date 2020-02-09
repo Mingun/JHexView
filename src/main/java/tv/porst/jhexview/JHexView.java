@@ -1803,6 +1803,92 @@ public final class JHexView extends JComponent
   }
   //</editor-fold>
 
+  //<editor-fold defaultstate="collapsed" desc="Search/Goto">
+  /**
+   * Attempts to find the next occurrence of keyword in the ascii view of the data,
+   * starting at the specified offset.
+   *
+   * @param offset The start offset for the search.
+   * @param keyword The keyword to search.
+   * @param caseSensitive Indicates whether to search case sensitive.
+   *
+   * @return The start position of the match, or -1 if no match has been found.
+   *
+   * @throws NullPointerException If {@code keyword} is {@code null}
+   */
+  public int findAscii(int offset, String keyword, boolean caseSensitive)
+  {
+    if (getDefinitionStatus() == DefinitionStatus.DEFINED) {
+      if (keyword == null) {
+        throw new NullPointerException("String for search must not be null");
+      }
+      // converting string into byte array
+      final byte[] pattern = new byte[keyword.length()];
+      for (int i = 0; i < pattern.length; i++) {
+        pattern[i] = (byte)(keyword.charAt(i) & 0xFF);
+      }
+
+      final int len = getData().getDataLength() - offset;
+      return findIndexOf(offset, len, pattern, caseSensitive);
+    }
+    return -1;
+  }
+
+  /**
+   * Attempts to find the next occurrence of keyword in the hex view of the data,
+   * starting at the specified offset.
+   *
+   * @param offset The start offset for the search.
+   * @param keyword The keyword to search.
+   *
+   * @return The start position of the match, or -1 if no match has been found.
+   *
+   * @throws NullPointerException If {@code keyword} is {@code null}
+   */
+  public int findHex(int offset, byte[] keyword)
+  {
+    if (getDefinitionStatus() == DefinitionStatus.DEFINED) {
+      if (keyword == null) {
+        throw new NullPointerException("Byte array for search must not be null");
+      }
+      final int len = getData().getDataLength() - offset;
+      return findIndexOf(offset, len, keyword, false);
+    }
+    return -1;
+  }
+
+  /**
+   * Scrolls to a given offset.
+   *
+   * @param offset The offset to scroll to.
+   *
+   * @throws IllegalArgumentException If the offset is out of bounds.
+   */
+  public void gotoOffset(final long offset)
+  {
+    if (m_dataProvider == null) {
+      throw new IllegalStateException("No data provider active");
+    }
+
+    if (getCurrentOffset() == offset) {
+      if (!isPositionVisible(getSelectionStart())) {
+        scrollToPosition(getSelectionStart());
+      }
+      return;
+    }
+
+    final long realOffset = offset - m_baseAddress;
+    final long end = m_dataProvider.getDataLength();
+
+    if (realOffset < 0 || realOffset >= end) {
+      throw new IllegalArgumentException("Invalid offset 0x" + Long.toHexString(realOffset) +
+        ", must be in range [0x0; 0x" + Long.toHexString(end) + "]");
+    }
+
+    setCurrentPosition(2 * realOffset);
+  }
+  //</editor-fold>
+
   //<editor-fold defaultstate="collapsed" desc="Private">
   /**
    * Calculates current character and row sizes.
@@ -3446,89 +3532,6 @@ public final class JHexView extends JComponent
     m_caret.removeListener(m_listener);
 
     m_caret.stop();
-  }
-
-
-  /**
-   * Attempts to find the next occurrence of keyword in the ascii view of the data,
-   * starting at the specified offset.
-   * @param offset The start offset for the search.
-   * @param keyword The keyword to search.
-   * @param caseSensitive Indicates whether to search case sensitive.
-   * @return The start position of the match, or -1 if no match has been found.
-   */
-  public int findAscii(int offset, String keyword, boolean caseSensitive)
-  {
-    if (getDefinitionStatus() == DefinitionStatus.DEFINED) {
-      byte[] pattern;
-      if (keyword != null) {
-        // converting string into byte array
-        pattern = new byte[keyword.length()];
-        for (int i = 0; i < pattern.length; i++) {
-          pattern[i] = (byte)(keyword.charAt(i) & 255);
-        }
-      } else {
-        pattern = new byte[0];
-      }
-
-      int len = getData().getDataLength() - offset;
-      return findIndexOf(offset, len, pattern, caseSensitive);
-    }
-    return -1;
-  }
-
-  /**
-   * Attempts to find the next occurrence of keyword in the hex view of the data,
-   * starting at the specified offset.
-   * @param offset The start offset for the search.
-   * @param keyword The keyword to search.
-   * @return The start position of the match, or -1 if no match has been found.
-   */
-  public int findHex(int offset, byte[] keyword)
-  {
-    if (getDefinitionStatus() == DefinitionStatus.DEFINED) {
-      if (keyword == null) {
-        keyword = new byte[0];
-      }
-      int len = getData().getDataLength() - offset;
-      return findIndexOf(offset, len, keyword, false);
-    }
-    return -1;
-  }
-
-  /**
-   * Scrolls to a given offset.
-   *
-   * @param offset
-   *          The offset to scroll to.
-   *
-   * @throws IllegalArgumentException
-   *           Thrown if the offset is out of bounds.
-   */
-  public void gotoOffset(final long offset)
-  {
-    if (m_dataProvider == null) {
-      throw new IllegalStateException("Error: No data provider active");
-    }
-
-    if (getCurrentOffset() == offset) {
-
-      if (!isPositionVisible(getSelectionStart())) {
-        scrollToPosition(getSelectionStart());
-      }
-
-      return;
-    }
-
-    final long realOffset = offset - m_baseAddress;
-    final long end = m_dataProvider.getDataLength();
-
-    if (realOffset < 0 || realOffset >= end) {
-      throw new IllegalArgumentException("Invalid offset 0x" + Long.toHexString(realOffset) +
-        ", must be in range [0x0; 0x" + Long.toHexString(end) + "]");
-    }
-
-    setCurrentPosition(2 * realOffset);
   }
 
   /**
