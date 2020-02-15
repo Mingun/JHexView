@@ -1904,16 +1904,15 @@ public final class JHexView extends JComponent
       }
     } else {
       if (end < 0) {
-        setSelection(0, selectionModel.end);
+        setSelection(0, 0);
       } else {
         final int nibbleCount = 2 * m_dataProvider.getDataLength();
         if (end < nibbleCount) {
-          setSelection(end, selectionModel.end);
+          setSelection(end, end);
         } else {
-          setSelection(nibbleCount, selectionModel.end);
+          setSelection(nibbleCount, nibbleCount);
         }
       }
-      setSelection(selectionModel.start, selectionModel.start);
     }
 
     final long newPosition = selectionModel.end;
