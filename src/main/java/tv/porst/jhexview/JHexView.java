@@ -2009,7 +2009,7 @@ public final class JHexView extends JComponent
           final long normalizedOffset = m_flipBytes ? (currentOffset & -m_bytesPerColumn)
               + m_bytesPerColumn - (currentOffset % m_bytesPerColumn) - 1 : currentOffset;
 
-          if (isSelectedOffset(normalizedOffset)) {
+          if (selectionModel.isSelected(2 * (normalizedOffset - m_baseAddress))) {
             g.setColor(m_selectionColor);
             g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
 
@@ -2273,11 +2273,11 @@ public final class JHexView extends JComponent
       bytesToDraw = getMaximumVisibleBytes();
     }
 
-    long currentOffset = getFirstVisibleOffset();
+    long byteOffset = getFirstVisibleOffset();
 
     // Iterate over all bytes in the data set and
     // print their hex value to the hex view.
-    for (int i = 0; i < bytesToDraw; i++, currentOffset++) {
+    for (int i = 0; i < bytesToDraw; i++, byteOffset++) {
       if (i != 0) {
         if (i % m_bytesPerRow == 0) {
           // If the end of a row was reached, reset the x-coordinate
@@ -2306,7 +2306,7 @@ public final class JHexView extends JComponent
           postSpaceX = m_columnSpacing / 2;
         }
 
-        if (isSelectedOffset(currentOffset)) {
+        if (selectionModel.isSelected(2 * (byteOffset - m_baseAddress))) {
           g.setColor(m_selectionColor);
           g.fillRect(x - preSpaceX, y - m_charMaxAscent,
                      2 * m_charWidth + preSpaceX + postSpaceX, m_charMaxAscent + m_charMaxDescent);
@@ -2314,7 +2314,7 @@ public final class JHexView extends JComponent
           // Choose the right color for the hex view
           g.setColor(evenColumn ? m_fontColorHex1 : m_fontColorHex2);
         } else {
-          final ColoredRange range = findColoredRange(currentOffset);
+          final ColoredRange range = findColoredRange(byteOffset);
           if (range != null) {
             final Color bgColor = range.getBackgroundColor();
 
@@ -2326,11 +2326,11 @@ public final class JHexView extends JComponent
                        2 * m_charWidth + preSpaceX + postSpaceX, m_charMaxAscent + m_charMaxDescent);
             g.setColor(range.getColor());
           } else
-          if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(data[i], currentOffset)) {
-            final Color backgroundColor = m_colormap.getBackgroundColor(data[i], currentOffset);
-            final Color foregroundColor = isShowModified() && isModified(currentOffset)
+          if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(data[i], byteOffset)) {
+            final Color backgroundColor = m_colormap.getBackgroundColor(data[i], byteOffset);
+            final Color foregroundColor = isShowModified() && isModified(byteOffset)
               ? m_fontColorModified
-              : m_colormap.getForegroundColor(data[i], currentOffset);
+              : m_colormap.getForegroundColor(data[i], byteOffset);
 
             if (backgroundColor != null) {
               g.setColor(backgroundColor);
@@ -2345,7 +2345,7 @@ public final class JHexView extends JComponent
             }
           } else
           // Choose the right color for the hex view
-          if (isShowModified() && isModified(currentOffset)) {
+          if (isShowModified() && isModified(byteOffset)) {
             g.setColor(m_fontColorModified);
           } else {
             g.setColor(evenColumn ? m_fontColorHex1 : m_fontColorHex2);
@@ -3177,22 +3177,6 @@ public final class JHexView extends JComponent
     final int lastVisible = firstVisible + getMaximumVisibleBytes();
 
     return position >= 2 * firstVisible && position <= 2 * lastVisible;
-  }
-
-  private boolean isSelectedOffset(long currentOffset)
-  {
-    if (selectionModel.isEmpty()) {
-      return false;
-    }
-
-    currentOffset = currentOffset - m_baseAddress;
-    if (selectionModel.length > 0) {
-      return currentOffset >= selectionModel.start / 2
-          && 2 * currentOffset < selectionModel.start + selectionModel.length;
-    } else {
-      return currentOffset >= (selectionModel.start + selectionModel.length) / 2
-          && 2 * currentOffset < selectionModel.start;
-    }
   }
 
   /**

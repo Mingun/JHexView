@@ -32,4 +32,22 @@ public class SelectionModel {
    * @return {@code true} if no data are selected.
    */
   public boolean isEmpty() { return length == 0; }
+
+  /**
+   * Returns {@code true} if the nibble at specified offset is selected.
+   *
+   * @param offset an offset of nibble
+   *
+   * @return {@code true} if the nibble at specified offset is selected,
+   *         {@code false} otherwise
+   */
+  public boolean isSelected(long offset) {
+    if (length > 0) {
+      return offset >= start && offset < start + length;
+    } else
+    if (length < 0) {
+      return offset >= start + length && offset < start;
+    }
+    return false;
+  }
 }
