@@ -1,8 +1,22 @@
 v2.0
 ====
+Breaking Changes
+----------------
 - Remove unused parts of embedded splib library
 - `setActiveView` now throw NPE if argument is `null`
-- Now component doesn't redrawed when specified setters is called if value of property actually doesn't changed:
+- `getMouseOverHighlighted` renamed to `isMouseOverHighlighted`
+- `doFlipBytes` renamed to `isFlipBytes`
+- `findAscii/findHex` now throws NPE if search pattern is `null` instead of returning
+  start offset for search
+
+### Removed
+- `getFontSize`. Use `getFont().getSize()` instead
+- `setFontSize`. Use `setFont(getFont().deriveFont((float)getFont().getSize()))` instead
+- `setFontStyle`. Use `setFont(getFont().deriveFont(...))` instead
+
+Other Changes
+-------------
+- Now component doesn't redrawn when specified setters is called if value of property actually doesn't changed:
   - `setAddressMode`
   - `setBaseAddress`
   - `setBytesPerColumn`
@@ -12,13 +26,6 @@ v2.0
   - `setHexViewWidth`
 - Redraw view when call setters:
   - `setAddressMode`
-- `getMouseOverHighlighted` renamed to `isMouseOverHighlighted`
-- `doFlipBytes` renamed to `isFlipBytes`
-- `getFontSize` removed. Use `getFont().getSize()`
-- `setFontSize` removed. Use `setFont(getFont().deriveFont((float)getFont().getSize()))`
-- `setFontStyle` removed. Use `setFont(getFont().deriveFont(...))`
-- `findAscii/findHex` now throws NPE if search pattern is `null` instead of returning
-  start offset for search
 
 v1.1
 ====

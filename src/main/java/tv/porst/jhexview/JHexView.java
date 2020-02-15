@@ -67,7 +67,6 @@ import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
 import tv.porst.splib.convert.ConvertHelpers;
-import tv.porst.splib.gui.GuiHelpers;
 import tv.porst.splib.gui.caret.ICaretListener;
 import tv.porst.splib.gui.caret.JCaret;
 
@@ -162,7 +161,7 @@ public final class JHexView extends JComponent
   /**
    * Font used to draw the data.
    */
-  private Font m_font = new Font(GuiHelpers.getMonospaceFont(), 0, 12);
+  private Font m_font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
 
   /**
    * Currently selected position. Note that this field is twice as large as the
@@ -1464,7 +1463,7 @@ public final class JHexView extends JComponent
   {
     if (font != m_font) {
       if (font == null) {
-        font = new Font(GuiHelpers.getMonospaceFont(), Font.PLAIN, m_font.getSize());
+        font = new Font(Font.MONOSPACED, Font.PLAIN, m_font.getSize());
       }
       m_font = font;
       super.setFont(m_font);
