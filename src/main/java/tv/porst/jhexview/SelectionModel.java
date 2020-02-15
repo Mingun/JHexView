@@ -25,4 +25,11 @@ public class SelectionModel {
    * before the current position are selected.
    */
   long length;
+
+  /**
+   * Returns {@code true} if no data are selected.
+   *
+   * @return {@code true} if no data are selected.
+   */
+  public boolean isEmpty() { return length == 0; }
 }

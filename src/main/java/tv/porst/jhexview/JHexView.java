@@ -1768,7 +1768,7 @@ public final class JHexView extends JComponent
    */
   public void copy()
   {
-    if (selectionModel.length > 0) {
+    if (!selectionModel.isEmpty()) {
       m_CopyTextAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
     }
   }
@@ -3181,16 +3181,15 @@ public final class JHexView extends JComponent
 
   private boolean isSelectedOffset(long currentOffset)
   {
-    currentOffset = currentOffset - m_baseAddress;
-
-    if (selectionModel.length == 0) {
+    if (selectionModel.isEmpty()) {
       return false;
     }
-    else if (selectionModel.length > 0) {
+
+    currentOffset = currentOffset - m_baseAddress;
+    if (selectionModel.length > 0) {
       return currentOffset >= selectionModel.start / 2
           && 2 * currentOffset < selectionModel.start + selectionModel.length;
-    }
-    else {
+    } else {
       return currentOffset >= (selectionModel.start + selectionModel.length) / 2
           && 2 * currentOffset < selectionModel.start;
     }
@@ -3621,7 +3620,7 @@ public final class JHexView extends JComponent
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-      if (modifier == 0 && selectionModel.length != 0) {
+      if (modifier == 0 && !selectionModel.isEmpty()) {
         final long cur = getCurrentNibble();
         final long start = Math.min(selectionModel.start, selectionModel.start+selectionModel.length) & ~1L;
         changeBy(event, start - cur);
@@ -3668,7 +3667,7 @@ public final class JHexView extends JComponent
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-      if (modifier == 0 && selectionModel.length != 0) {
+      if (modifier == 0 && !selectionModel.isEmpty()) {
         final long cur = getCurrentNibble();
         final long start = (Math.max(selectionModel.start, selectionModel.start+selectionModel.length)+1) & ~1L;
         changeBy(event, start - cur);
