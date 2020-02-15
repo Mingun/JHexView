@@ -1590,7 +1590,7 @@ public final class JHexView extends JComponent
    */
   public long getCurrentOffset()
   {
-    final long currentOffset = m_baseAddress + getCurrentNibble() / 2;
+    final long currentOffset = m_baseAddress + m_caret.getPosition() / 2;
 
     return m_flipBytes ? (currentOffset & -m_bytesPerColumn) + m_bytesPerColumn
         - (currentOffset % m_bytesPerColumn) - 1 : currentOffset;
@@ -2746,17 +2746,7 @@ public final class JHexView extends JComponent
    */
   private int getCurrentColumn()
   {
-    return (int) getCurrentNibble() % (NIBBLES_PER_BYTE * m_bytesPerRow);
-  }
-
-  /**
-   * Returns the nibble at the caret position.
-   *
-   * @return The nibble at the care position.
-   */
-  private long getCurrentNibble()
-  {
-    return selectionModel.end;
+    return (int) m_caret.getPosition() % (NIBBLES_PER_BYTE * m_bytesPerRow);
   }
 
   /**
@@ -2766,7 +2756,7 @@ public final class JHexView extends JComponent
    */
   private int getCurrentRow()
   {
-    return (int) getCurrentNibble() / (NIBBLES_PER_BYTE * m_bytesPerRow);
+    return (int) m_caret.getPosition() / (NIBBLES_PER_BYTE * m_bytesPerRow);
   }
 
   /**
@@ -3305,6 +3295,7 @@ public final class JHexView extends JComponent
       fireHexListener(start, end);
       repaint();
     }
+    m_caret.setPosition(end);
   }
   //</editor-fold>
 
@@ -3435,9 +3426,9 @@ public final class JHexView extends JComponent
     {
       final long change;
       if (isCtrl) {
-        change = getData().getDataLength()*2 - getCurrentNibble() - 2;
+        change = getData().getDataLength()*2 - m_caret.getPosition() - 2;
       } else {
-        change = (m_bytesPerRow*2) - (getCurrentNibble() % (m_bytesPerRow*2)) - 2;
+        change = (m_bytesPerRow*2) - (m_caret.getPosition() % (m_bytesPerRow*2)) - 2;
       }
       changeBy(event, change);
     }
@@ -3459,9 +3450,9 @@ public final class JHexView extends JComponent
     {
       final long change;
       if (isCtrl) {
-        change = -getCurrentNibble();
+        change = -m_caret.getPosition();
       } else {
-        change = -(getCurrentNibble() % (m_bytesPerRow*2));
+        change = -(m_caret.getPosition() % (m_bytesPerRow*2));
       }
       changeBy(event, change);
     }
@@ -3483,7 +3474,7 @@ public final class JHexView extends JComponent
     public void actionPerformed(final ActionEvent event)
     {
       if (modifier == 0 && !selectionModel.isEmpty()) {
-        final long cur = getCurrentNibble();
+        final long cur = m_caret.getPosition();
         final long start = Math.min(selectionModel.start, selectionModel.end) & ~1L;
         changeBy(event, start - cur);
       } else {
@@ -3530,7 +3521,7 @@ public final class JHexView extends JComponent
     public void actionPerformed(final ActionEvent event)
     {
       if (modifier == 0 && !selectionModel.isEmpty()) {
-        final long cur = getCurrentNibble();
+        final long cur = m_caret.getPosition();
         final long start = (Math.max(selectionModel.start, selectionModel.end)+1) & ~1L;
         changeBy(event, start - cur);
       } else {

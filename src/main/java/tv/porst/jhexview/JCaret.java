@@ -20,6 +20,7 @@ import javax.swing.Timer;
  */
 public class JCaret
 {
+  //<editor-fold defaultstate="collapsed" desc="Fields">
   /**
    * The default blink time of the caret in milliseconds.
    */
@@ -55,10 +56,14 @@ public class JCaret
    */
   private Color m_caretColor;
 
+  /** The offset of nibble at the caret position. */
+  private long position;
+
   /**
    * Listeners that are notified about changes in the caret.
    */
   private final InternalListener m_listener = new InternalListener();
+  //</editor-fold>
 
   /**
    * Creates a new caret with a default blink period of 500ms and the default
@@ -127,6 +132,27 @@ public class JCaret
     m_caretTimer = new Timer(blinkPeriod, m_listener);
     m_caretTimer.setRepeats(true);
     m_caretTimer.start();
+  }
+
+  /**
+   * Returns the offset of nibble at the caret position.
+   *
+   * @return the offset of nibble at the caret position.
+   */
+  public long getPosition() { return position; }
+
+  /**
+   * Sets new position of caret to specified offset from start of data.
+   * Notifies all {@link #addCaretListener listeners} of a position change change
+   * of the caret.
+   *
+   * @param position New caret position in nibble offsets from first data nibble
+   */
+  public void setPosition(long position) {
+    if (this.position != position) {
+      this.position = position;
+      notifyListeners();
+    }
   }
 
   /**
