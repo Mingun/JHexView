@@ -1628,8 +1628,9 @@ public final class JHexView extends JComponent
    */
   public long getFirstSelectedOffset()
   {
-    final long start = m_baseAddress + selectionModel.start;
-    return (selectionModel.length >= 0 ? start : start + selectionModel.length) / 2;
+    return selectionModel.end >= selectionModel.start
+      ? (m_baseAddress + selectionModel.start) / 2
+      : (m_baseAddress + selectionModel.end  ) / 2;
   }
   /**
    * Returns the last selected offset.
@@ -1640,17 +1641,15 @@ public final class JHexView extends JComponent
   {
     // In this method it is necessary to round up. This is because
     // half a selected byte counts as a fully selected byte.
-    final long start = m_baseAddress + selectionModel.start;
-
-    if (selectionModel.length >= 0) {
-      return (start + selectionModel.length) / 2
-           + (start + selectionModel.length) % 2;
+    if (selectionModel.end >= selectionModel.start) {
+      return (m_baseAddress + selectionModel.end) / 2
+           + (m_baseAddress + selectionModel.end) % 2;
     }
-    return start / 2
-         + start % 2;
+    return (m_baseAddress + selectionModel.start) / 2
+         + (m_baseAddress + selectionModel.start) % 2;
   }
 
-  public long getSelectionLength() { return selectionModel.length; }
+  public long getSelectionLength() { return selectionModel.end - selectionModel.start; }
   //</editor-fold>
 
   //<editor-fold defaultstate="collapsed" desc="Shortcuts">
@@ -1891,7 +1890,7 @@ public final class JHexView extends JComponent
    */
   private void changeBy(boolean expandSelection, final long length)
   {
-    final long end = selectionModel.start + selectionModel.length + length;
+    final long end = selectionModel.end + length;
     if (expandSelection) {
       if (end < 0) {
         setSelection(selectionModel.start, 0);
@@ -1905,19 +1904,19 @@ public final class JHexView extends JComponent
       }
     } else {
       if (end < 0) {
-        setSelection(0, selectionModel.start + selectionModel.length);
+        setSelection(0, selectionModel.end);
       } else {
         final int nibbleCount = 2 * m_dataProvider.getDataLength();
         if (end < nibbleCount) {
-          setSelection(end, selectionModel.start + selectionModel.length);
+          setSelection(end, selectionModel.end);
         } else {
-          setSelection(nibbleCount, selectionModel.start + selectionModel.length);
+          setSelection(nibbleCount, selectionModel.end);
         }
       }
       setSelection(selectionModel.start, selectionModel.start);
     }
 
-    final long newPosition = selectionModel.start + selectionModel.length;
+    final long newPosition = selectionModel.end;
 
     if (newPosition < 2 * getFirstVisibleByte()) {
       scrollToPosition(newPosition);
@@ -2616,14 +2615,14 @@ public final class JHexView extends JComponent
    * @param start Start of the selection or cursor position in nibbles.
    * @param length Selection length in nibbles.
    */
-  private void fireHexListener(long start, long length)
+  private void fireHexListener(long start, long end)
   {
     HexViewEvent event = null;
     Object[] l = m_listeners.getListenerList();
     for (int i = l.length - 2; i >= 0; i -= 2) {
       if (l[i] == IHexViewListener.class) {
         if (event == null) {
-          event = new HexViewEvent(this, start, length);
+          event = new HexViewEvent(this, start, end - start);
         }
         ((IHexViewListener)l[i+1]).stateChanged(event);
       }
@@ -2755,7 +2754,7 @@ public final class JHexView extends JComponent
    */
   private long getCurrentNibble()
   {
-    return selectionModel.start + selectionModel.length;
+    return selectionModel.end;
   }
 
   /**
@@ -3327,14 +3326,13 @@ public final class JHexView extends JComponent
   }
   @Deprecated
   private void setSelection(long start, long end) {
-    final long length = end - start;
-    final boolean hasChanges = selectionModel.start  != start
-                            || selectionModel.length != length;
-    selectionModel.start  = start;
-    selectionModel.length = length;
+    final boolean hasChanges = selectionModel.start != start
+                            || selectionModel.end   != end;
+    selectionModel.start = start;
+    selectionModel.end   = end;
 
     if (hasChanges) {
-      fireHexListener(start, length);
+      fireHexListener(start, end);
       repaint();
     }
   }
@@ -3594,7 +3592,7 @@ public final class JHexView extends JComponent
     {
       if (modifier == 0 && !selectionModel.isEmpty()) {
         final long cur = getCurrentNibble();
-        final long start = Math.min(selectionModel.start, selectionModel.start+selectionModel.length) & ~1L;
+        final long start = Math.min(selectionModel.start, selectionModel.end) & ~1L;
         changeBy(event, start - cur);
       } else {
         changeBy(event, m_activeView == Views.HEX_VIEW ? -1L : -2L);
@@ -3641,7 +3639,7 @@ public final class JHexView extends JComponent
     {
       if (modifier == 0 && !selectionModel.isEmpty()) {
         final long cur = getCurrentNibble();
-        final long start = (Math.max(selectionModel.start, selectionModel.start+selectionModel.length)+1) & ~1L;
+        final long start = (Math.max(selectionModel.start, selectionModel.end)+1) & ~1L;
         changeBy(event, start - cur);
       } else {
         changeBy(event, m_activeView == Views.HEX_VIEW ? 1L : 2L);
@@ -3706,7 +3704,7 @@ public final class JHexView extends JComponent
 
       if (m_activeView == Views.HEX_VIEW) {
         m_activeView = Views.ASCII_VIEW;
-        setSelection(selectionModel.start - selectionModel.start % 2, selectionModel.start + selectionModel.length);
+        setSelection(selectionModel.start - selectionModel.start % 2, selectionModel.end);
       }
       else {
         m_activeView = Views.HEX_VIEW;
@@ -3875,7 +3873,7 @@ public final class JHexView extends JComponent
 
         // preparing data
         long ofs = hv.selectionModel.start / 2L;
-        int len = (int)hv.selectionModel.length / 2;
+        int len = (int)(hv.selectionModel.end - selectionModel.start) / 2;
         if (ofs+len > getData().getDataLength()) {
           len = (int)(getData().getDataLength() - ofs);
         }
@@ -4110,20 +4108,20 @@ public final class JHexView extends JComponent
         if (y < m_paddingTop - (m_rowHeight - m_charHeight)) {
           scrollToPosition(2 * getFirstVisibleByte() - 2 * m_bytesPerRow);
 
-          if (selectionModel.length - 2 * m_bytesPerRow < 0) {
+          if (selectionModel.end - selectionModel.start - 2 * m_bytesPerRow < 0) {
             return;
           }
 
-          setSelection(selectionModel.start, selectionModel.start + selectionModel.length - 2 * m_bytesPerRow);
+          setSelection(selectionModel.start, selectionModel.end - 2 * m_bytesPerRow);
         } else
         if (y >= m_rowHeight * getNumberOfVisibleRows()) {
           scrollToPosition(2 * getFirstVisibleByte() + 2 * m_bytesPerRow);
 
-          if (selectionModel.length + 2 * m_bytesPerRow > 2 * (m_dataProvider.getDataLength() - selectionModel.start)) {
+          if (selectionModel.end - selectionModel.start + 2 * m_bytesPerRow > 2 * (m_dataProvider.getDataLength() - selectionModel.start)) {
             return;
           }
 
-          setSelection(selectionModel.start, selectionModel.start + selectionModel.length + 2 * m_bytesPerRow);
+          setSelection(selectionModel.start, selectionModel.end + 2 * m_bytesPerRow);
         } else {
           final int position = getNibbleAtCoordinate(x, y);
 

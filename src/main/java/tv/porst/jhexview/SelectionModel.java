@@ -20,18 +20,15 @@ public class SelectionModel {
    * length of data because nibbles can be selected.
    */
   long start;
-  /**
-   * Current selection length in nibbles. This value can be negative if nibbles
-   * before the current position are selected.
-   */
-  long length;
+  /** End offset of selection (inclusive). */
+  long end;
 
   /**
    * Returns {@code true} if no data are selected.
    *
    * @return {@code true} if no data are selected.
    */
-  public boolean isEmpty() { return length == 0; }
+  public boolean isEmpty() { return start == end; }
 
   /**
    * Returns {@code true} if the nibble at specified offset is selected.
@@ -42,11 +39,11 @@ public class SelectionModel {
    *         {@code false} otherwise
    */
   public boolean isSelected(long offset) {
-    if (length > 0) {
-      return offset >= start && offset < start + length;
+    if (end > start) {
+      return offset >= start && offset < end;
     } else
-    if (length < 0) {
-      return offset >= start + length && offset < start;
+    if (end < start) {
+      return offset >= end && offset < start;
     }
     return false;
   }
