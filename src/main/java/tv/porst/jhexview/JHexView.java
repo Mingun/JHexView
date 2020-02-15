@@ -12,7 +12,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.KeyboardFocusManager;
-import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
@@ -2358,22 +2357,17 @@ public final class JHexView extends JComponent
 
       if (lastHighlightedView == Views.HEX_VIEW) {
         // If the mouse is in the hex view just one nibble must be highlighted.
-        final Rectangle r = getNibbleBoundsHex(nibble);
-        g.fillRect((int) r.getX(), (int) r.getY(), (int) r.getWidth(), (int) r.getHeight());
+        drawNibbleBoundsHex(g, nibble);
       } else
       if (lastHighlightedView == Views.ASCII_VIEW) {
         // If the mouse is in the ASCII view it is necessary
         // to highlight two nibbles.
-        Rectangle r = getNibbleBoundsHex(nibble);
-        g.fillRect((int) r.getX(), (int) r.getY(), (int) r.getWidth(), (int) r.getHeight());
-
-        r = getNibbleBoundsHex(nibble + 1);
-        g.fillRect((int) r.getX(), (int) r.getY(), (int) r.getWidth(), (int) r.getHeight());
+        drawNibbleBoundsHex(g, nibble);
+        drawNibbleBoundsHex(g, nibble + 1);
       }
 
       // Highlight the byte in the ASCII panel too.
-      final Rectangle r = getByteBoundsAscii(nibble);
-      g.fillRect((int) r.getX(), (int) r.getY(), (int) r.getWidth(), (int) r.getHeight());
+      drawByteBoundsAscii(g, nibble);
     }
   }
 
@@ -2640,32 +2634,25 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns the bounds of a byte in the ASCII view.
+   * Draws the bounds of a byte in the ASCII view.
    *
-   * @param position
-   *          The index of one of the nibbles that belong to the byte.
-   *
-   * @return The bounds of the byte in the ASCII view.
+   * @param g The graphics context of the ASCII panel
+   * @param position The index of one of the nibbles that belong to the byte
    */
-  private Rectangle getByteBoundsAscii(final int position)
+  private void drawByteBoundsAscii(Graphics g, final int position)
   {
-    if (position < 2 * getFirstVisibleByte()) {
-      return new Rectangle(-1, -1, -1, -1);
-    }
-
-    if (position > 2 * getFirstVisibleByte() + 2 * getMaximumVisibleBytes()) {
-      return new Rectangle(-1, -1, -1, -1);
-    }
-
     final int relativePosition = (position - 2 * getFirstVisibleByte()) / 2;
+    if (relativePosition < 0 || relativePosition > getMaximumVisibleBytes()) {
+      return;
+    }
 
     final int row = relativePosition / m_bytesPerRow;
-    final int character = relativePosition % m_bytesPerRow;
+    final int chr = relativePosition % m_bytesPerRow;
 
-    final int x = getAsciiViewLeft() + m_paddingAsciiLeft + character * m_charWidth;
+    final int x = getAsciiViewLeft() + m_paddingAsciiLeft + chr * m_charWidth;
     final int y = m_paddingTop + getHeaderHeight() - m_charHeight + row * m_rowHeight;
 
-    return new Rectangle(x, y, m_charWidth, m_charHeight);
+    g.fillRect(x, y, m_charWidth, m_charHeight);
   }
 
   /**
@@ -2933,35 +2920,26 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns the bounds of a nibble in the hex view.
+   * Draws the bounds of a nibble in the hex view.
    *
-   * @param position
-   *          The index of the nibble.
-   *
-   * @return The bounds of the nibble in the hex view.
+   * @param g The graphics context of the hex panel
+   * @param position The index of the nibble
    */
-  private Rectangle getNibbleBoundsHex(final int position)
+  private void drawNibbleBoundsHex(Graphics g, final int position)
   {
-    if (position < 2 * getFirstVisibleByte()) {
-      return new Rectangle(-1, -1, -1, -1);
-    }
-
-    if (position > 2 * getFirstVisibleByte() + 2 * getMaximumVisibleBytes()) {
-      return new Rectangle(-1, -1, -1, -1);
-    }
-
     final int relativePosition = position - 2 * getFirstVisibleByte();
+    if (relativePosition < 0 || relativePosition > 2 * getMaximumVisibleBytes()) {
+      return;
+    }
 
-    final int columnSize = getColumnSize();
-
-    final int row = relativePosition / (2 * m_bytesPerRow);
+    final int row    = relativePosition / (2 * m_bytesPerRow);
     final int column = relativePosition % (2 * m_bytesPerRow) / (2 * m_bytesPerColumn);
     final int nibble = relativePosition % (2 * m_bytesPerRow) % (2 * m_bytesPerColumn);
 
-    final int x = getHexViewLeft() + m_paddingHexLeft + column * columnSize + nibble * m_charWidth;
+    final int x = getHexViewLeft() + m_paddingHexLeft + column * getColumnSize() + nibble * m_charWidth;
     final int y = m_paddingTop + getHeaderHeight() - m_charHeight + row * m_rowHeight;
 
-    return new Rectangle(x, y, m_charWidth, m_charHeight);
+    g.fillRect(x, y, m_charWidth, m_charHeight);
   }
 
   /**
