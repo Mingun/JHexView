@@ -1923,7 +1923,7 @@ public final class JHexView extends JComponent
 
       // Show the caret if necessary
       if (hasFocus()) {
-        drawCaret(gx);
+        drawCaret((Graphics2D)gx);
       }
     }
   }
@@ -2363,39 +2363,29 @@ public final class JHexView extends JComponent
    *
    * @param g The graphics context of the hex panel.
    */
-  private void drawCaret(final Graphics g)
+  private void drawCaret(final Graphics2D g)
   {
-    if (!isEditable()) {
-      return;
-    }
-
     if (getCurrentOffset() < getFirstVisibleByte()
-        || getCurrentColumn() > getFirstVisibleByte() + getMaximumVisibleBytes()) {
+     || getCurrentColumn() > getFirstVisibleByte() + getMaximumVisibleBytes()
+    ) {
       return;
     }
 
     final int characterSize = getCharacterWidth(g);
 
-    if (m_activeView == Views.HEX_VIEW) {
-      drawCaretHexWindow(g, characterSize, m_rowHeight, false);
-      drawCaretAsciiWindow(g, characterSize, m_rowHeight, true);
-    }
-    else {
-      drawCaretAsciiWindow(g, characterSize, m_rowHeight, false);
-      drawCaretHexWindow(g, characterSize, m_rowHeight, true);
-    }
-
+    final boolean isHex = m_activeView == Views.HEX_VIEW;
+    drawCaretHexWindow(g, characterSize, isHex);
+    drawCaretAsciiWindow(g, characterSize, !isHex);
   }
   /**
-   * Draws the caret in the hex window.
+   * Draws the caret or outline in the hex window. Caret is drawn only if component
+   * is editable, otherwise an outline is drawn.
    *
    * @param g The graphic context of the hex panel.
    * @param characterWidth The width of a single character.
-   * @param characterHeight The height of a single character.
-   * @param showHint If {@code true}, show a hint box instead of the caret.
+   * @param showCaret If {@code false}, show an outline instead of the caret.
    */
-  private void drawCaretHexWindow(final Graphics g, final int characterWidth,
-                                  final int characterHeight, boolean showHint)
+  private void drawCaretHexWindow(Graphics2D g, int characterWidth, boolean showCaret)
   {
     final int currentRow = getCurrentRow() - m_firstRow;
     final int currentColumn = getCurrentColumn();
@@ -2411,34 +2401,30 @@ public final class JHexView extends JComponent
                   + paddingColumns;
 
     // Calculate the position of the row.
-    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + characterHeight * currentRow;
+    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + m_rowHeight * currentRow;
 
-    if (showHint) {
-      Graphics2D g2 = (Graphics2D)g;
-      Stroke oldStroke = g2.getStroke();
-      g2.setStroke(DOTTED_STROKE);
-      g2.drawRect(x, y, characterWidth*2+1, characterHeight);
-      g2.setStroke(oldStroke);
-    } else {
+    if (showCaret && isEditable()) {
+      // Caret is blinking. When it in blink off state it is invisible
       if (m_caret.isVisible()) {
-        m_caret.draw(g, x, y, characterHeight);
+        m_caret.draw(g, x, y, m_rowHeight);
       }
+    } else {
+      final Stroke oldStroke = g.getStroke();
+      g.setStroke(DOTTED_STROKE);
+      // If caret in ASCII window, then outline byte, otherwise only one nibble
+      g.drawRect(x, y, showCaret ? characterWidth : characterWidth*2+1, m_rowHeight);
+      g.setStroke(oldStroke);
     }
   }
   /**
-   * Draws the caret in the ASCII window.
+   * Draws the caret or outline in the ASCII window. Caret is drawn only if component
+   * is editable, otherwise an outline is drawn.
    *
-   * @param g
-   *          The graphic context of the ASCII panel.
-   * @param characterWidth
-   *          The width of a single character.
-   * @param characterHeight
-   *          The height of a single character.
-   * @param showHint
-   *          If true, show a hint box instead of the caret.
+   * @param g The graphic context of the ASCII panel.
+   * @param characterWidth The width of a single character.
+   * @param showCaret If {@code false}, show an outline instead of the caret.
    */
-  private void drawCaretAsciiWindow(final Graphics g, final int characterWidth,
-                                    final int characterHeight, boolean showHint)
+  private void drawCaretAsciiWindow(Graphics2D g, int characterWidth, boolean showCaret)
   {
     final int currentRow = getCurrentRow() - m_firstRow;
     final int currentColumn = getCurrentColumn();
@@ -2451,18 +2437,18 @@ public final class JHexView extends JComponent
     final int x = -m_firstColumn * m_charWidth + startLeft + currentCharacter * characterWidth;
 
     // Calculate the position of the row
-    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + characterHeight * currentRow;
+    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + m_rowHeight * currentRow;
 
-    if (showHint) {
-      Graphics2D g2 = (Graphics2D)g;
-      Stroke oldStroke = g2.getStroke();
-      g2.setStroke(DOTTED_STROKE);
-      g2.drawRect(x, y, characterWidth, characterHeight);
-      g2.setStroke(oldStroke);
-    } else {
+    if (showCaret && isEditable()) {
+      // Caret is blinking. When it in blink off state it is invisible
       if (m_caret.isVisible()) {
-        m_caret.draw(g, x, y, characterHeight);
+        m_caret.draw(g, x, y, m_rowHeight);
       }
+    } else {
+      final Stroke oldStroke = g.getStroke();
+      g.setStroke(DOTTED_STROKE);
+      g.drawRect(x, y, characterWidth, m_rowHeight);
+      g.setStroke(oldStroke);
     }
   }
   //</editor-fold>

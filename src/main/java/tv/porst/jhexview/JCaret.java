@@ -4,7 +4,6 @@ package tv.porst.jhexview;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
@@ -164,37 +163,33 @@ public class JCaret
   /**
    * Draws the caret on a given graphics surface.
    *
-   * @param g
-   *          The graphics surface where the caret is drawn.
-   * @param x
-   *          The x coordinate of the caret.
-   * @param y
-   *          The y coordinate of the caret.
-   * @param height
-   *          The height of the caret.
+   * @param g The graphics surface where the caret is drawn.
+   * @param x The x coordinate of the caret.
+   * @param y The y coordinate of the caret.
+   * @param height The height of the caret.
    *
    * @throws NullPointerException
    *           Thrown if the graphics context is null.
    */
-  public void draw(final Graphics g, final int x, final int y, final int height)
+  public void draw(final Graphics2D g, final int x, final int y, final int height)
   {
     if (g == null) {
-      throw new NullPointerException("Error: Graphics context can't be null");
+      throw new NullPointerException("Caret: Graphics context can't be null");
     }
 
     if (isVisible()) {
 
       // Store old settings
       final Color oldColor = g.getColor();
-      Stroke oldStroke = ((Graphics2D)g).getStroke();
+      final Stroke oldStroke = g.getStroke();
 
       // Draw the caret
       g.setColor(m_caretColor);
-      ((Graphics2D)g).setStroke(DEFAULT_CARET_STROKE);
+      g.setStroke(DEFAULT_CARET_STROKE);
       g.drawLine(x, y, x, y + height - 1);
 
       // Restore original settings
-      ((Graphics2D)g).setStroke(oldStroke);
+      g.setStroke(oldStroke);
       g.setColor(oldColor);
     }
   }
@@ -236,7 +231,7 @@ public class JCaret
   public void setColor(final Color color)
   {
     if (color == null) {
-      throw new NullPointerException("Error: Caret color can't be null");
+      throw new NullPointerException("Caret: Caret color can't be null");
     }
 
     if (!m_caretColor.equals(color)) {

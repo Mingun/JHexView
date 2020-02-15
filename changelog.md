@@ -12,6 +12,8 @@ Breaking Changes
 - `doFlipBytes` renamed to `isFlipBytes`
 - `findAscii/findHex` now throws NPE if search pattern is `null` instead of returning
   start offset for search
+- `JCaret.draw` now requires `Graphics2D` as first parameter explicitly instead of implicitly
+  (via cast in implementation)
 
 ### Removed
 - `getFontSize`. Use `getFont().getSize()` instead
@@ -36,6 +38,8 @@ Other Changes
   - `setHexViewWidth`
 - Redraw view when call setters:
   - `setAddressMode`
+- Always drawn caret outline (dotted rectangle) if component has focus,
+  not only in editable state for panel without input focus
 
 v1.1
 ====
