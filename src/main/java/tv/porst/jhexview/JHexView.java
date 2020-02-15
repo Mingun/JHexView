@@ -2101,7 +2101,7 @@ public final class JHexView extends JComponent
    */
   private void drawHexView(final Graphics g)
   {
-    final int standardSize = 2 * getCharacterWidth(g);
+    final int standardSize = 2 * m_charWidth;
 
     final int firstX = -m_firstColumn * m_charWidth + m_paddingHexLeft + m_offsetViewWidth;
 
@@ -2244,8 +2244,6 @@ public final class JHexView extends JComponent
    */
   private void drawAsciiPanel(final Graphics g)
   {
-    final int characterWidth = getCharacterWidth(g);
-
     final int initx = getAsciiViewLeft() + m_paddingAsciiLeft;
 
     int x = initx;
@@ -2353,7 +2351,7 @@ public final class JHexView extends JComponent
         g.drawString("?", x, y);
       }
 
-      x += characterWidth;
+      x += m_charWidth;
     }
   }
 
@@ -2371,21 +2369,18 @@ public final class JHexView extends JComponent
       return;
     }
 
-    final int characterSize = getCharacterWidth(g);
-
     final boolean isHex = m_activeView == Views.HEX_VIEW;
-    drawCaretHexWindow(g, characterSize, isHex);
-    drawCaretAsciiWindow(g, characterSize, !isHex);
+    drawCaretHexWindow(g, isHex);
+    drawCaretAsciiWindow(g, !isHex);
   }
   /**
    * Draws the caret or outline in the hex window. Caret is drawn only if component
    * is editable, otherwise an outline is drawn.
    *
    * @param g The graphic context of the hex panel.
-   * @param characterWidth The width of a single character.
    * @param showCaret If {@code false}, show an outline instead of the caret.
    */
-  private void drawCaretHexWindow(Graphics2D g, int characterWidth, boolean showCaret)
+  private void drawCaretHexWindow(Graphics2D g, boolean showCaret)
   {
     final int currentRow = getCurrentRow() - m_firstRow;
     final int currentColumn = getCurrentColumn();
@@ -2397,8 +2392,7 @@ public final class JHexView extends JComponent
     final int paddingColumns = currentColumn / (2 * m_bytesPerColumn) * m_columnSpacing;
 
     // Calculate the position of the character in the row.
-    final int x = -m_firstColumn * m_charWidth + startLeft + currentColumn * characterWidth
-                  + paddingColumns;
+    final int x = (currentColumn - m_firstColumn) * m_charWidth + startLeft + paddingColumns;
 
     // Calculate the position of the row.
     final int y = m_paddingTop + getHeaderHeight() - m_charHeight + m_rowHeight * currentRow;
@@ -2412,7 +2406,7 @@ public final class JHexView extends JComponent
       final Stroke oldStroke = g.getStroke();
       g.setStroke(DOTTED_STROKE);
       // If caret in ASCII window, then outline byte, otherwise only one nibble
-      g.drawRect(x, y, showCaret ? characterWidth : characterWidth*2+1, m_rowHeight);
+      g.drawRect(x, y, showCaret ? m_charWidth : m_charWidth*2+1, m_rowHeight);
       g.setStroke(oldStroke);
     }
   }
@@ -2421,10 +2415,9 @@ public final class JHexView extends JComponent
    * is editable, otherwise an outline is drawn.
    *
    * @param g The graphic context of the ASCII panel.
-   * @param characterWidth The width of a single character.
    * @param showCaret If {@code false}, show an outline instead of the caret.
    */
-  private void drawCaretAsciiWindow(Graphics2D g, int characterWidth, boolean showCaret)
+  private void drawCaretAsciiWindow(Graphics2D g, boolean showCaret)
   {
     final int currentRow = getCurrentRow() - m_firstRow;
     final int currentColumn = getCurrentColumn();
@@ -2434,7 +2427,7 @@ public final class JHexView extends JComponent
     final int startLeft = 9 + m_offsetViewWidth + m_hexViewWidth;
 
     // Calculate the position of the current character in the row
-    final int x = -m_firstColumn * m_charWidth + startLeft + currentCharacter * characterWidth;
+    final int x = (currentCharacter - m_firstColumn) * m_charWidth + startLeft;
 
     // Calculate the position of the row
     final int y = m_paddingTop + getHeaderHeight() - m_charHeight + m_rowHeight * currentRow;
@@ -2447,7 +2440,7 @@ public final class JHexView extends JComponent
     } else {
       final Stroke oldStroke = g.getStroke();
       g.setStroke(DOTTED_STROKE);
-      g.drawRect(x, y, characterWidth, m_rowHeight);
+      g.drawRect(x, y, m_charWidth, m_rowHeight);
       g.setStroke(oldStroke);
     }
   }
@@ -2467,7 +2460,7 @@ public final class JHexView extends JComponent
         m_charHeight     = m.getAscent();
         m_charMaxAscent  = m.getMaxAscent();
         m_charMaxDescent = m.getMaxDescent();
-        m_charWidth = getCharacterWidth(g);
+        m_charWidth      = (int)m.getStringBounds("0", g).getWidth();
       } finally {
         g.dispose();
       }
@@ -2734,20 +2727,6 @@ public final class JHexView extends JComponent
     final int restBytes = m_dataProvider.getDataLength() - firstVisibleByte;
 
     return Math.min(maxBytes, restBytes);
-  }
-
-  /**
-   * Returns the character size of a single character on the given graphics
-   * context.
-   *
-   * @param g
-   *          The graphics context.
-   *
-   * @return The size of a single character.
-   */
-  private int getCharacterWidth(final Graphics g)
-  {
-    return (int) g.getFontMetrics().getStringBounds("0", g).getWidth();
   }
 
   /**
