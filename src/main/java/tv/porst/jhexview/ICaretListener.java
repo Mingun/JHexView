@@ -1,4 +1,4 @@
-package tv.porst.splib.gui.caret;
+package tv.porst.jhexview;
 
 /**
  * Interface to be implemented by classes that want to be notified about changed

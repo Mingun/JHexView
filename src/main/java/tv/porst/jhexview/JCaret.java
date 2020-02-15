@@ -1,7 +1,7 @@
 // splib by Sebastian Porst (sp@porst.tv)
 // Modified by argent77
 
-package tv.porst.splib.gui.caret;
+package tv.porst.jhexview;
 
 import java.awt.BasicStroke;
 import java.awt.Color;

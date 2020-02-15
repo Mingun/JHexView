@@ -66,9 +66,6 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
-import tv.porst.splib.gui.caret.ICaretListener;
-import tv.porst.splib.gui.caret.JCaret;
-
 /**
  * The JHexView component is a Java component that can be used to display data
  * in hexadecimal format.
@@ -288,7 +285,7 @@ public final class JHexView extends JComponent
   /**
    * Blinking caret of the component.
    */
-  private JCaret m_caret = new JCaret();
+  private final JCaret m_caret = new JCaret();
 
   /**
    * Left-padding of the hex view in pixels.

@@ -2,7 +2,7 @@ v2.0
 ====
 Breaking Changes
 ----------------
-- Remove unused parts of embedded splib library
+- Remove unused parts of embedded splib library and move used parts into `tv.porst.jhexview` package
 - `setActiveView` now throw NPE if argument is `null`
 - `getMouseOverHighlighted` renamed to `isMouseOverHighlighted`
 - `doFlipBytes` renamed to `isFlipBytes`
