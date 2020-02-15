@@ -1853,182 +1853,83 @@ public final class JHexView extends JComponent
   }
   //</editor-fold>
 
-  //<editor-fold defaultstate="collapsed" desc="Private">
-  /**
-   * Calculates current character and row sizes.
-   */
-  private void calculateSizes()
+  @Override
+  protected void paintComponent(final Graphics gx)
   {
-    final Graphics g = getGraphics();
-    if (g != null) {
-      try {
-        final FontMetrics m = g.getFontMetrics();
-        m_rowHeight      = m.getHeight();
-        m_charHeight     = m.getAscent();
-        m_charMaxAscent  = m.getMaxAscent();
-        m_charMaxDescent = m.getMaxDescent();
-        m_charWidth = getCharacterWidth(g);
-      } finally {
-        g.dispose();
-      }
-    }
-  }
+    super.paintComponent(gx);
 
-  private void changeBy(final ActionEvent event, final long length)
-  {
-    changeBy((event.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK, length);
-  }
-  /**
-   * Changes or expands selection.
-   *
-   * @param expandSelection If {@code true}, expand or reduce selection, otherwise
-   *        just select one nibble
-   * @param length The number of nibbles by which the cursor moved
-   */
-  private void changeBy(boolean expandSelection, final long length)
-  {
-    final long pos = selectionModel.end + length;
-    final long end;
-    if (pos < 0) {
-      end = 0;
-    } else {
-      final int nibbleCount = 2 * m_dataProvider.getDataLength();
-      end = pos < nibbleCount ? pos : nibbleCount;
-    }
-    setSelection(expandSelection ? selectionModel.start : end, end);
+    // Make room for a new graphic
+    resetBufferedGraphic(gx);
 
-    if (end < 2 * getFirstVisibleByte()) {
-      scrollToPosition(end);
-    } else
-    if (end >= 2 * (getFirstVisibleByte() + getMaximumVisibleBytes())) {
-      scrollToPosition(end + 2 * (m_bytesPerRow - getMaximumVisibleBytes()));
+    // Calculate current sizes of characters and rows
+    calculateSizes();
+
+    updateOffsetViewWidth();
+
+    if (m_firstDraw) {
+      m_firstDraw = false;
+
+      // The first time the component is drawn, its size must be set.
+      updateHexViewWidth();
+      updatePreferredSize();
     }
 
-    m_caret.setVisible(true);
-    repaint();
-  }
+    // Draw the background of the hex panel
+    drawBackground(gx);
 
-  /**
-   * Draws the content of the ASCII panel.
-   *
-   * @param g
-   *          The graphics context of the hex panel.
-   */
-  private void drawAsciiPanel(final Graphics g)
-  {
-    final int characterWidth = getCharacterWidth(g);
-
-    final int initx = getAsciiViewLeft() + m_paddingAsciiLeft;
-
-    int x = initx;
-    int y = m_paddingTop + getHeaderHeight();
-
-    // Drawing offset title
-    if (m_headerVisible) {
-      Font oldFont = getFont();
-      g.setFont(oldFont.deriveFont(m_headerFontStyle));
-      g.setColor(m_fontColorHeader);
-      String title = getHeaderTitleAscii(m_addressMode);
-      g.drawString(title, x, m_paddingTop);
-      g.setFont(oldFont);
-    }
+    // Draw the offsets column
+    drawOffsets(gx);
 
     if (isEnabled()) {
-      // Choose the right color for the ASCII view
-      g.setColor(m_fontColorAscii);
-    }
-    else {
-      g.setColor(m_disabledColor != m_bgColorAscii ? m_disabledColor : Color.WHITE);
+      // Only draw the cursor "shadow" if the component is enabled.
+      drawMouseOverHighlighting(gx);
     }
 
-    byte[] data = null;
-    int bytesToDraw;
+    // If the component has defined data, it can be drawn.
+    if (m_status == DefinitionStatus.DEFINED && m_dataProvider != null) {
 
-    if (m_status == DefinitionStatus.DEFINED) {
-      bytesToDraw = getBytesToDraw();
-      data = m_dataProvider.getData(getFirstVisibleOffset(), bytesToDraw);
-    } else {
-      bytesToDraw = getMaximumVisibleBytes();
-    }
+      final int bytesToDraw = getBytesToDraw();
 
-    long currentOffset = getFirstVisibleOffset();
+      if (bytesToDraw != 0 && !m_dataProvider.hasData(getFirstVisibleOffset(), bytesToDraw)) {
+        // At this point the component wants to draw data but the data
+        // provider does not have the data yet. The hope is that the data
+        // provider can reload the data. Until this happens, set the
+        // component's status to UNDEFINED and create a timer that
+        // periodically rechecks if the missing data is finally available.
 
-    for (int i = 0; i < bytesToDraw; i++, currentOffset++) {
-      if (i != 0 && i % m_bytesPerRow == 0) {
-        // If the end of a row is reached, reset the
-        // x-coordinate and increase the y-coordinate.
-        x = initx;
-        y += m_rowHeight;
-      }
+        setDefinitionStatus(DefinitionStatus.UNDEFINED);
+        setEnabled(false);
 
-      if (m_status == DefinitionStatus.DEFINED) {
-        final byte b = data[i];
-
-        if (isEnabled()) {
-          // Fixed: Highlighting in debugger memory window is wrong in regards
-          // to the endianess selected
-          final long normalizedOffset = m_flipBytes ? (currentOffset & -m_bytesPerColumn)
-              + m_bytesPerColumn - (currentOffset % m_bytesPerColumn) - 1 : currentOffset;
-
-          if (selectionModel.isSelected(2 * (normalizedOffset - m_baseAddress))) {
-            g.setColor(m_selectionColor);
-            g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
-
-            // Choose the right color for the ASCII view
-            if (isShowModified() && isModified(currentOffset)) {
-              g.setColor(m_fontColorModified);
-            } else {
-              g.setColor(m_fontColorAscii);
-            }
-          } else {
-            final ColoredRange range = findColoredRange(currentOffset);
-            if (range != null && currentOffset + bytesToDraw >= range.getStart()) {
-              final Color bgColor = range.getBackgroundColor();
-
-              if (bgColor != null) {
-                g.setColor(bgColor);
-              }
-
-              g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
-              g.setColor(range.getColor());
-            } else
-            if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(b, currentOffset)) {
-              final Color backgroundColor = m_colormap.getBackgroundColor(b, currentOffset);
-              final Color foregroundColor = isShowModified() && isModified(currentOffset)
-                ? m_fontColorModified
-                : m_colormap.getForegroundColor(b, currentOffset);
-
-              if (backgroundColor != null) {
-                g.setColor(backgroundColor);
-                g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
-              }
-
-              if (foregroundColor != null) {
-                g.setColor(foregroundColor);
-              } else {
-                g.setColor(m_fontColorAscii);
-              }
-            } else
-            // Choose the right color for the ASCII view
-            if (isShowModified() && isModified(currentOffset)) {
-              g.setColor(m_fontColorModified);
-            } else {
-              g.setColor(m_fontColorAscii);
-            }
-          }
-        } else {
-          g.setColor(m_disabledColor != m_bgColorAscii ? m_disabledColor : Color.WHITE);
+        if (m_updateTimer != null) {
+          m_updateTimer.setRepeats(false);
+          m_updateTimer.stop();
         }
 
-        g.drawString(ASCII_VIEW_TABLE[b & 0xFF], x, y);
-      } else {
-        g.drawString("?", x, y);
-      }
+        m_updateTimer = new Timer(1000, new ActionWaitingForData(getFirstVisibleOffset(),
+            bytesToDraw));
+        m_updateTimer.setRepeats(true);
+        m_updateTimer.start();
 
-      x += characterWidth;
+        return;
+      }
+    }
+
+    if (isDataAvailable() || m_status == DefinitionStatus.UNDEFINED) {
+      // Draw the hex data
+      drawHexView(gx);
+
+      // Draw the ASCII data
+      drawAsciiPanel(gx);
+
+      // Show the caret if necessary
+      if (hasFocus()) {
+        drawCaret(gx);
+      }
     }
   }
 
+  //<editor-fold defaultstate="collapsed" desc="Private">
+  //<editor-fold defaultstate="collapsed" desc="Draw">
   /**
    * Draws the background of the hex panel.
    *
@@ -2075,120 +1976,123 @@ public final class JHexView extends JComponent
       g.drawLine(x3, HH, x3, H);
     }
   }
-
   /**
-   * Draws the caret.
+   * Draws the offsets in the offset view.
    *
-   * @param g
+   * @param g The graphics context of the hex panel.
    */
-  private void drawCaret(final Graphics g)
+  private void drawOffsets(final Graphics g)
   {
-    if (!isEditable()) {
-      return;
+    final int x = -m_firstColumn * m_charWidth + 10;
+
+    // Drawing offset title
+    if (m_headerVisible) {
+      Font oldFont = getFont();
+      g.setFont(oldFont.deriveFont(m_headerFontStyle));
+      g.setColor(m_fontColorHeader);
+      String title = getHeaderTitleOffset(m_addressMode);
+      g.drawString(title, x, m_paddingTop);
+      g.setFont(oldFont);
     }
 
-    if (getCurrentOffset() < getFirstVisibleByte()
-        || getCurrentColumn() > getFirstVisibleByte() + getMaximumVisibleBytes()) {
-      return;
+    if (isEnabled()) {
+      // Choose the right color for the offset text
+      g.setColor(m_fontColorOffsets);
+    } else {
+      g.setColor(m_disabledColor != m_bgColorOffset ? m_disabledColor : Color.WHITE);
     }
 
-    final int characterSize = getCharacterWidth(g);
-
-    if (m_activeView == Views.HEX_VIEW) {
-      drawCaretHexWindow(g, characterSize, m_rowHeight, false);
-      drawCaretAsciiWindow(g, characterSize, m_rowHeight, true);
-    }
-    else {
-      drawCaretAsciiWindow(g, characterSize, m_rowHeight, false);
-      drawCaretHexWindow(g, characterSize, m_rowHeight, true);
+    final int bytesToDraw;
+    if (m_status == DefinitionStatus.DEFINED && m_dataProvider.getDataLength() > 0) {
+      bytesToDraw = getBytesToDraw();
+    } else {
+      bytesToDraw = m_bytesPerRow;
     }
 
+    final String formatString = getAddressModeFormat(m_addressMode);
+
+    // Iterate over the data and print the offsets
+    for (int i = 0; i < bytesToDraw; i += m_bytesPerRow) {
+      final long address = m_baseAddress + m_firstRow * m_bytesPerRow + i;
+
+      final String offsetString = String.format(formatString, address);
+      final int currentRow = i / m_bytesPerRow;
+
+      int y = m_paddingTop + getHeaderHeight() + currentRow * m_rowHeight;
+      g.drawString(offsetString, x, y);
+    }
   }
 
+  //<editor-fold defaultstate="collapsed" desc="Mouse highlighting">
   /**
-   * Draws the caret in the ASCII window.
+   * Draws highlighting of bytes when the mouse hovers over them.
    *
-   * @param g
-   *          The graphic context of the ASCII panel.
-   * @param characterWidth
-   *          The width of a single character.
-   * @param characterHeight
-   *          The height of a single character.
-   * @param showHint
-   *          If true, show a hint box instead of the caret.
+   * @param g The graphics context where the highlighting is drawn.
    */
-  private void drawCaretAsciiWindow(final Graphics g, final int characterWidth,
-                                    final int characterHeight, boolean showHint)
+  private void drawMouseOverHighlighting(final Graphics g)
   {
-    final int currentRow = getCurrentRow() - m_firstRow;
-    final int currentColumn = getCurrentColumn();
-    final int currentCharacter = currentColumn / 2;
+    if (m_mouseOverHighlighted) {
+      final int nibble = getNibbleAtCoordinate(m_lastMouseX, m_lastMouseY);
+      if (nibble == -1) {
+        return;
+      }
+      final int relativeNibble = nibble - 2 * getFirstVisibleByte();
+      if (relativeNibble >= 0 && relativeNibble <= 2 * getMaximumVisibleBytes()) {
+        // Find out in which view the mouse currently resides.
+        final Views lastHighlightedView = m_lastMouseX >= getAsciiViewLeft()
+            ? Views.ASCII_VIEW
+            : Views.HEX_VIEW;
 
-    // Calculate the position of the first character in the row
-    final int startLeft = 9 + m_offsetViewWidth + m_hexViewWidth;
-
-    // Calculate the position of the current character in the row
-    final int x = -m_firstColumn * m_charWidth + startLeft + currentCharacter * characterWidth;
-
-    // Calculate the position of the row
-    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + characterHeight * currentRow;
-
-    if (showHint) {
-      Graphics2D g2 = (Graphics2D)g;
-      Stroke oldStroke = g2.getStroke();
-      g2.setStroke(DOTTED_STROKE);
-      g2.drawRect(x, y, characterWidth, characterHeight);
-      g2.setStroke(oldStroke);
-    } else {
-      if (m_caret.isVisible()) {
-        m_caret.draw(g, x, y, characterHeight);
+        g.setColor(m_colorHighlight);
+        if (lastHighlightedView == Views.HEX_VIEW) {
+          // If the mouse is in the hex view just one nibble must be highlighted.
+          drawNibbleBoundsHex(g, relativeNibble);
+        } else
+        if (lastHighlightedView == Views.ASCII_VIEW) {
+          // If the mouse is in the ASCII view it is necessary
+          // to highlight two nibbles.
+          drawNibbleBoundsHex(g, relativeNibble);
+          drawNibbleBoundsHex(g, relativeNibble + 1);
+        }
+        // Highlight the byte in the ASCII panel too.
+        drawByteBoundsAscii(g, relativeNibble / 2);
       }
     }
   }
-
   /**
-   * Draws the caret in the hex window.
+   * Draws the bounds of a nibble in the hex view.
    *
-   * @param g
-   *          The graphic context of the hex panel.
-   * @param characterWidth
-   *          The width of a single character.
-   * @param characterHeight
-   *          The height of a single character.
-   * @param showHint
-   *          If true, show a hint box instead of the caret.
+   * @param g The graphics context of the hex panel
+   * @param position The index of the nibble
    */
-  private void drawCaretHexWindow(final Graphics g, final int characterWidth,
-                                  final int characterHeight, boolean showHint)
+  private void drawNibbleBoundsHex(Graphics g, final int position)
   {
-    final int currentRow = getCurrentRow() - m_firstRow;
-    final int currentColumn = getCurrentColumn();
+    final int row    = position / (2 * m_bytesPerRow);
+    final int column = position % (2 * m_bytesPerRow) / (2 * m_bytesPerColumn);
+    final int nibble = position % (2 * m_bytesPerRow) % (2 * m_bytesPerColumn);
 
-    // Calculate the position of the first character in the row.
-    final int startLeft = 9 + m_offsetViewWidth;
+    final int x = getHexViewLeft() + m_paddingHexLeft + column * getColumnSize() + nibble * m_charWidth;
+    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + row * m_rowHeight;
 
-    // Calculate the extra padding between columns.
-    final int paddingColumns = currentColumn / (2 * m_bytesPerColumn) * m_columnSpacing;
-
-    // Calculate the position of the character in the row.
-    final int x = -m_firstColumn * m_charWidth + startLeft + currentColumn * characterWidth
-                  + paddingColumns;
-
-    // Calculate the position of the row.
-    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + characterHeight * currentRow;
-
-    if (showHint) {
-      Graphics2D g2 = (Graphics2D)g;
-      Stroke oldStroke = g2.getStroke();
-      g2.setStroke(DOTTED_STROKE);
-      g2.drawRect(x, y, characterWidth*2+1, characterHeight);
-      g2.setStroke(oldStroke);
-    } else {
-      if (m_caret.isVisible()) {
-        m_caret.draw(g, x, y, characterHeight);
-      }
-    }
+    g.fillRect(x, y, m_charWidth, m_charMaxAscent + m_charMaxDescent);
   }
+  /**
+   * Draws the bounds of a byte in the ASCII view.
+   *
+   * @param g The graphics context of the ASCII panel
+   * @param position The index of one of the nibbles that belong to the byte
+   */
+  private void drawByteBoundsAscii(Graphics g, final int position)
+  {
+    final int row = position / m_bytesPerRow;
+    final int chr = position % m_bytesPerRow;
+
+    final int x = getAsciiViewLeft() + m_paddingAsciiLeft + chr * m_charWidth;
+    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + row * m_rowHeight;
+
+    g.fillRect(x, y, m_charWidth, m_charMaxAscent + m_charMaxDescent);
+  }
+  //</editor-fold>
 
   /**
    * Draws the content of the hex view.
@@ -2333,92 +2237,289 @@ public final class JHexView extends JComponent
       x += standardSize;
     }
   }
-
   /**
-   * Draws highlighting of bytes when the mouse hovers over them.
+   * Draws the content of the ASCII panel.
    *
-   * @param g
-   *          The graphics context where the highlighting is drawn.
+   * @param g The graphics context of the hex panel.
    */
-  private void drawMouseOverHighlighting(final Graphics g)
+  private void drawAsciiPanel(final Graphics g)
   {
-    if (m_mouseOverHighlighted) {
-      final int nibble = getNibbleAtCoordinate(m_lastMouseX, m_lastMouseY);
-      if (nibble == -1) {
-        return;
-      }
-      final int relativeNibble = nibble - 2 * getFirstVisibleByte();
-      if (relativeNibble >= 0 && relativeNibble <= 2 * getMaximumVisibleBytes()) {
-        // Find out in which view the mouse currently resides.
-        final Views lastHighlightedView = m_lastMouseX >= getAsciiViewLeft()
-            ? Views.ASCII_VIEW
-            : Views.HEX_VIEW;
+    final int characterWidth = getCharacterWidth(g);
 
-        g.setColor(m_colorHighlight);
-        if (lastHighlightedView == Views.HEX_VIEW) {
-          // If the mouse is in the hex view just one nibble must be highlighted.
-          drawNibbleBoundsHex(g, relativeNibble);
-        } else
-        if (lastHighlightedView == Views.ASCII_VIEW) {
-          // If the mouse is in the ASCII view it is necessary
-          // to highlight two nibbles.
-          drawNibbleBoundsHex(g, relativeNibble);
-          drawNibbleBoundsHex(g, relativeNibble + 1);
-        }
-        // Highlight the byte in the ASCII panel too.
-        drawByteBoundsAscii(g, relativeNibble / 2);
-      }
-    }
-  }
+    final int initx = getAsciiViewLeft() + m_paddingAsciiLeft;
 
-  /**
-   * Draws the offsets in the offset view.
-   *
-   * @param g
-   *          The graphics context of the hex panel.
-   */
-  private void drawOffsets(final Graphics g)
-  {
-    final int x = -m_firstColumn * m_charWidth + 10;
+    int x = initx;
+    int y = m_paddingTop + getHeaderHeight();
 
     // Drawing offset title
     if (m_headerVisible) {
       Font oldFont = getFont();
       g.setFont(oldFont.deriveFont(m_headerFontStyle));
       g.setColor(m_fontColorHeader);
-      String title = getHeaderTitleOffset(m_addressMode);
+      String title = getHeaderTitleAscii(m_addressMode);
       g.drawString(title, x, m_paddingTop);
       g.setFont(oldFont);
     }
 
     if (isEnabled()) {
-      // Choose the right color for the offset text
-      g.setColor(m_fontColorOffsets);
+      // Choose the right color for the ASCII view
+      g.setColor(m_fontColorAscii);
     }
     else {
-      g.setColor(m_disabledColor != m_bgColorOffset ? m_disabledColor : Color.WHITE);
+      g.setColor(m_disabledColor != m_bgColorAscii ? m_disabledColor : Color.WHITE);
     }
 
-    final int bytesToDraw;
-    if (m_status == DefinitionStatus.DEFINED && m_dataProvider.getDataLength() > 0) {
+    byte[] data = null;
+    int bytesToDraw;
+
+    if (m_status == DefinitionStatus.DEFINED) {
       bytesToDraw = getBytesToDraw();
+      data = m_dataProvider.getData(getFirstVisibleOffset(), bytesToDraw);
+    } else {
+      bytesToDraw = getMaximumVisibleBytes();
+    }
+
+    long currentOffset = getFirstVisibleOffset();
+
+    for (int i = 0; i < bytesToDraw; i++, currentOffset++) {
+      if (i != 0 && i % m_bytesPerRow == 0) {
+        // If the end of a row is reached, reset the
+        // x-coordinate and increase the y-coordinate.
+        x = initx;
+        y += m_rowHeight;
+      }
+
+      if (m_status == DefinitionStatus.DEFINED) {
+        final byte b = data[i];
+
+        if (isEnabled()) {
+          // Fixed: Highlighting in debugger memory window is wrong in regards
+          // to the endianess selected
+          final long normalizedOffset = m_flipBytes ? (currentOffset & -m_bytesPerColumn)
+              + m_bytesPerColumn - (currentOffset % m_bytesPerColumn) - 1 : currentOffset;
+
+          if (selectionModel.isSelected(2 * (normalizedOffset - m_baseAddress))) {
+            g.setColor(m_selectionColor);
+            g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
+
+            // Choose the right color for the ASCII view
+            if (isShowModified() && isModified(currentOffset)) {
+              g.setColor(m_fontColorModified);
+            } else {
+              g.setColor(m_fontColorAscii);
+            }
+          } else {
+            final ColoredRange range = findColoredRange(currentOffset);
+            if (range != null && currentOffset + bytesToDraw >= range.getStart()) {
+              final Color bgColor = range.getBackgroundColor();
+
+              if (bgColor != null) {
+                g.setColor(bgColor);
+              }
+
+              g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
+              g.setColor(range.getColor());
+            } else
+            if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(b, currentOffset)) {
+              final Color backgroundColor = m_colormap.getBackgroundColor(b, currentOffset);
+              final Color foregroundColor = isShowModified() && isModified(currentOffset)
+                ? m_fontColorModified
+                : m_colormap.getForegroundColor(b, currentOffset);
+
+              if (backgroundColor != null) {
+                g.setColor(backgroundColor);
+                g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
+              }
+
+              if (foregroundColor != null) {
+                g.setColor(foregroundColor);
+              } else {
+                g.setColor(m_fontColorAscii);
+              }
+            } else
+            // Choose the right color for the ASCII view
+            if (isShowModified() && isModified(currentOffset)) {
+              g.setColor(m_fontColorModified);
+            } else {
+              g.setColor(m_fontColorAscii);
+            }
+          }
+        } else {
+          g.setColor(m_disabledColor != m_bgColorAscii ? m_disabledColor : Color.WHITE);
+        }
+
+        g.drawString(ASCII_VIEW_TABLE[b & 0xFF], x, y);
+      } else {
+        g.drawString("?", x, y);
+      }
+
+      x += characterWidth;
+    }
+  }
+
+  //<editor-fold defaultstate="collapsed" desc="Caret">
+  /**
+   * Draws the caret.
+   *
+   * @param g The graphics context of the hex panel.
+   */
+  private void drawCaret(final Graphics g)
+  {
+    if (!isEditable()) {
+      return;
+    }
+
+    if (getCurrentOffset() < getFirstVisibleByte()
+        || getCurrentColumn() > getFirstVisibleByte() + getMaximumVisibleBytes()) {
+      return;
+    }
+
+    final int characterSize = getCharacterWidth(g);
+
+    if (m_activeView == Views.HEX_VIEW) {
+      drawCaretHexWindow(g, characterSize, m_rowHeight, false);
+      drawCaretAsciiWindow(g, characterSize, m_rowHeight, true);
     }
     else {
-      bytesToDraw = m_bytesPerRow;
+      drawCaretAsciiWindow(g, characterSize, m_rowHeight, false);
+      drawCaretHexWindow(g, characterSize, m_rowHeight, true);
     }
 
-    final String formatString = getAddressModeFormat(m_addressMode);
+  }
+  /**
+   * Draws the caret in the hex window.
+   *
+   * @param g The graphic context of the hex panel.
+   * @param characterWidth The width of a single character.
+   * @param characterHeight The height of a single character.
+   * @param showHint If {@code true}, show a hint box instead of the caret.
+   */
+  private void drawCaretHexWindow(final Graphics g, final int characterWidth,
+                                  final int characterHeight, boolean showHint)
+  {
+    final int currentRow = getCurrentRow() - m_firstRow;
+    final int currentColumn = getCurrentColumn();
 
-    // Iterate over the data and print the offsets
-    for (int i = 0; i < bytesToDraw; i += m_bytesPerRow) {
-      final long address = m_baseAddress + m_firstRow * m_bytesPerRow + i;
+    // Calculate the position of the first character in the row.
+    final int startLeft = 9 + m_offsetViewWidth;
 
-      final String offsetString = String.format(formatString, address);
-      final int currentRow = i / m_bytesPerRow;
+    // Calculate the extra padding between columns.
+    final int paddingColumns = currentColumn / (2 * m_bytesPerColumn) * m_columnSpacing;
 
-      int y = m_paddingTop + getHeaderHeight() + currentRow * m_rowHeight;
-      g.drawString(offsetString, x, y);
+    // Calculate the position of the character in the row.
+    final int x = -m_firstColumn * m_charWidth + startLeft + currentColumn * characterWidth
+                  + paddingColumns;
+
+    // Calculate the position of the row.
+    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + characterHeight * currentRow;
+
+    if (showHint) {
+      Graphics2D g2 = (Graphics2D)g;
+      Stroke oldStroke = g2.getStroke();
+      g2.setStroke(DOTTED_STROKE);
+      g2.drawRect(x, y, characterWidth*2+1, characterHeight);
+      g2.setStroke(oldStroke);
+    } else {
+      if (m_caret.isVisible()) {
+        m_caret.draw(g, x, y, characterHeight);
+      }
     }
+  }
+  /**
+   * Draws the caret in the ASCII window.
+   *
+   * @param g
+   *          The graphic context of the ASCII panel.
+   * @param characterWidth
+   *          The width of a single character.
+   * @param characterHeight
+   *          The height of a single character.
+   * @param showHint
+   *          If true, show a hint box instead of the caret.
+   */
+  private void drawCaretAsciiWindow(final Graphics g, final int characterWidth,
+                                    final int characterHeight, boolean showHint)
+  {
+    final int currentRow = getCurrentRow() - m_firstRow;
+    final int currentColumn = getCurrentColumn();
+    final int currentCharacter = currentColumn / 2;
+
+    // Calculate the position of the first character in the row
+    final int startLeft = 9 + m_offsetViewWidth + m_hexViewWidth;
+
+    // Calculate the position of the current character in the row
+    final int x = -m_firstColumn * m_charWidth + startLeft + currentCharacter * characterWidth;
+
+    // Calculate the position of the row
+    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + characterHeight * currentRow;
+
+    if (showHint) {
+      Graphics2D g2 = (Graphics2D)g;
+      Stroke oldStroke = g2.getStroke();
+      g2.setStroke(DOTTED_STROKE);
+      g2.drawRect(x, y, characterWidth, characterHeight);
+      g2.setStroke(oldStroke);
+    } else {
+      if (m_caret.isVisible()) {
+        m_caret.draw(g, x, y, characterHeight);
+      }
+    }
+  }
+  //</editor-fold>
+  //</editor-fold>
+
+  /**
+   * Calculates current character and row sizes.
+   */
+  private void calculateSizes()
+  {
+    final Graphics g = getGraphics();
+    if (g != null) {
+      try {
+        final FontMetrics m = g.getFontMetrics();
+        m_rowHeight      = m.getHeight();
+        m_charHeight     = m.getAscent();
+        m_charMaxAscent  = m.getMaxAscent();
+        m_charMaxDescent = m.getMaxDescent();
+        m_charWidth = getCharacterWidth(g);
+      } finally {
+        g.dispose();
+      }
+    }
+  }
+
+  private void changeBy(final ActionEvent event, final long length)
+  {
+    changeBy((event.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK, length);
+  }
+  /**
+   * Changes or expands selection.
+   *
+   * @param expandSelection If {@code true}, expand or reduce selection, otherwise
+   *        just select one nibble
+   * @param length The number of nibbles by which the cursor moved
+   */
+  private void changeBy(boolean expandSelection, final long length)
+  {
+    final long pos = selectionModel.end + length;
+    final long end;
+    if (pos < 0) {
+      end = 0;
+    } else {
+      final int nibbleCount = 2 * m_dataProvider.getDataLength();
+      end = pos < nibbleCount ? pos : nibbleCount;
+    }
+    setSelection(expandSelection ? selectionModel.start : end, end);
+
+    if (end < 2 * getFirstVisibleByte()) {
+      scrollToPosition(end);
+    } else
+    if (end >= 2 * (getFirstVisibleByte() + getMaximumVisibleBytes())) {
+      scrollToPosition(end + 2 * (m_bytesPerRow - getMaximumVisibleBytes()));
+    }
+
+    m_caret.setVisible(true);
+    repaint();
   }
 
   /**
@@ -2631,23 +2732,6 @@ public final class JHexView extends JComponent
   private int getAsciiViewLeft()
   {
     return getHexViewLeft() + getHexViewWidth();
-  }
-
-  /**
-   * Draws the bounds of a byte in the ASCII view.
-   *
-   * @param g The graphics context of the ASCII panel
-   * @param position The index of one of the nibbles that belong to the byte
-   */
-  private void drawByteBoundsAscii(Graphics g, final int position)
-  {
-    final int row = position / m_bytesPerRow;
-    final int chr = position % m_bytesPerRow;
-
-    final int x = getAsciiViewLeft() + m_paddingAsciiLeft + chr * m_charWidth;
-    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + row * m_rowHeight;
-
-    g.fillRect(x, y, m_charWidth, m_charHeight);
   }
 
   /**
@@ -2912,24 +2996,6 @@ public final class JHexView extends JComponent
     final int position = 2 * byteAtPos + nibbleInColumn;
 
     return position >= 2 * m_dataProvider.getDataLength() ? -1 : position;
-  }
-
-  /**
-   * Draws the bounds of a nibble in the hex view.
-   *
-   * @param g The graphics context of the hex panel
-   * @param position The index of the nibble
-   */
-  private void drawNibbleBoundsHex(Graphics g, final int position)
-  {
-    final int row    = position / (2 * m_bytesPerRow);
-    final int column = position % (2 * m_bytesPerRow) / (2 * m_bytesPerColumn);
-    final int nibble = position % (2 * m_bytesPerRow) % (2 * m_bytesPerColumn);
-
-    final int x = getHexViewLeft() + m_paddingHexLeft + column * getColumnSize() + nibble * m_charWidth;
-    final int y = m_paddingTop + getHeaderHeight() - m_charHeight + row * m_rowHeight;
-
-    g.fillRect(x, y, m_charWidth, m_charHeight);
   }
 
   /**
@@ -3276,84 +3342,6 @@ public final class JHexView extends JComponent
     }
   }
   //</editor-fold>
-
-  /**
-   * Paints the hex window.
-   */
-  @Override
-  protected void paintComponent(final Graphics gx)
-  {
-    super.paintComponent(gx);
-
-    // Make room for a new graphic
-    resetBufferedGraphic(gx);
-
-    // Calculate current sizes of characters and rows
-    calculateSizes();
-
-    updateOffsetViewWidth();
-
-    if (m_firstDraw) {
-      m_firstDraw = false;
-
-      // The first time the component is drawn, its size must be set.
-      updateHexViewWidth();
-      updatePreferredSize();
-    }
-
-    // Draw the background of the hex panel
-    drawBackground(gx);
-
-    // Draw the offsets column
-    drawOffsets(gx);
-
-    if (isEnabled()) {
-      // Only draw the cursor "shadow" if the component is enabled.
-      drawMouseOverHighlighting(gx);
-    }
-
-    // If the component has defined data, it can be drawn.
-    if (m_status == DefinitionStatus.DEFINED && m_dataProvider != null) {
-
-      final int bytesToDraw = getBytesToDraw();
-
-      if (bytesToDraw != 0 && !m_dataProvider.hasData(getFirstVisibleOffset(), bytesToDraw)) {
-        // At this point the component wants to draw data but the data
-        // provider does not have the data yet. The hope is that the data
-        // provider can reload the data. Until this happens, set the
-        // component's status to UNDEFINED and create a timer that
-        // periodically rechecks if the missing data is finally available.
-
-        setDefinitionStatus(DefinitionStatus.UNDEFINED);
-        setEnabled(false);
-
-        if (m_updateTimer != null) {
-          m_updateTimer.setRepeats(false);
-          m_updateTimer.stop();
-        }
-
-        m_updateTimer = new Timer(1000, new ActionWaitingForData(getFirstVisibleOffset(),
-            bytesToDraw));
-        m_updateTimer.setRepeats(true);
-        m_updateTimer.start();
-
-        return;
-      }
-    }
-
-    if (isDataAvailable() || m_status == DefinitionStatus.UNDEFINED) {
-      // Draw the hex data
-      drawHexView(gx);
-
-      // Draw the ASCII data
-      drawAsciiPanel(gx);
-
-      // Show the caret if necessary
-      if (hasFocus()) {
-        drawCaret(gx);
-      }
-    }
-  }
 
   public void dispose()
   {
