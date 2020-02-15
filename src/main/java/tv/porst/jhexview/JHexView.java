@@ -3199,13 +3199,11 @@ public final class JHexView extends JComponent
    */
   private void setCurrentPosition(final long newPosition)
   {
-    selectionModel.start = newPosition; // Avoid notifying twice
-
-    if (!isPositionVisible(selectionModel.start)) {
-      scrollToPosition(selectionModel.start);
+    if (!isPositionVisible(newPosition)) {
+      scrollToPosition(newPosition);
     }
 
-    fireHexListener(selectionModel.start, 0);
+    setSelection(newPosition, newPosition);
   }
 
   /**
@@ -3325,9 +3323,7 @@ public final class JHexView extends JComponent
       }
     }
 
-    selectionModel.start  = 2 * start;
-    selectionModel.length = 2 * (end - start + 1);
-    fireHexListener(selectionModel.start, selectionModel.length);
+    setSelection(2 * start, 2 * (end + 1));
   }
   @Deprecated
   private void setSelection(long start, long end) {
@@ -4168,8 +4164,6 @@ public final class JHexView extends JComponent
       if (event.getButton() == MouseEvent.BUTTON1/* || event.getButton() == MouseEvent.BUTTON3*/) {
         mouseButtonPressed = true;
 
-        selectionModel.length = 0; // We don't want the notifiers to kick in here.
-
         requestFocusInWindow();
 
         final int x = event.getX();
@@ -4202,7 +4196,7 @@ public final class JHexView extends JComponent
         } else {
           // m_selectionLength = 0 must be notified in case the click position
           // is invalid.
-          fireHexListener(selectionModel.start, selectionModel.length);
+          setSelection(selectionModel.start, selectionModel.start);
         }
         repaint();
       }
