@@ -1890,44 +1890,21 @@ public final class JHexView extends JComponent
    */
   private void changeBy(boolean expandSelection, final long length)
   {
-    final long end = selectionModel.end + length;
-    if (expandSelection) {
-      if (end < 0) {
-        setSelection(selectionModel.start, 0);
-      } else {
-        final int nibbleCount = 2 * m_dataProvider.getDataLength();
-        if (end < nibbleCount) {
-          setSelection(selectionModel.start, end);
-        } else {
-          setSelection(selectionModel.start, nibbleCount);
-        }
-      }
+    final long pos = selectionModel.end + length;
+    final long end;
+    if (pos < 0) {
+      end = 0;
     } else {
-      if (end < 0) {
-        setSelection(0, 0);
-      } else {
-        final int nibbleCount = 2 * m_dataProvider.getDataLength();
-        if (end < nibbleCount) {
-          setSelection(end, end);
-        } else {
-          setSelection(nibbleCount, nibbleCount);
-        }
-      }
+      final int nibbleCount = 2 * m_dataProvider.getDataLength();
+      end = pos < nibbleCount ? pos : nibbleCount;
     }
+    setSelection(expandSelection ? selectionModel.start : end, end);
 
-    final long newPosition = selectionModel.end;
-
-    if (newPosition < 2 * getFirstVisibleByte()) {
-      scrollToPosition(newPosition);
+    if (end < 2 * getFirstVisibleByte()) {
+      scrollToPosition(end);
     } else
-    if (newPosition >= 2 * (getFirstVisibleByte() + getMaximumVisibleBytes())) {
-
-      final long invisibleNibbles = newPosition - 2
-          * (getFirstVisibleByte() + getMaximumVisibleBytes());
-
-      final long scrollpos = 2 * getFirstVisibleByte() + 2 * m_bytesPerRow + invisibleNibbles;
-
-      scrollToPosition(scrollpos);
+    if (end >= 2 * (getFirstVisibleByte() + getMaximumVisibleBytes())) {
+      scrollToPosition(end + 2 * (m_bytesPerRow - getMaximumVisibleBytes()));
     }
 
     m_caret.setVisible(true);
