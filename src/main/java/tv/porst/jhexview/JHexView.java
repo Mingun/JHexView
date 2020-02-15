@@ -1894,27 +1894,27 @@ public final class JHexView extends JComponent
     final long end = selectionModel.start + selectionModel.length + length;
     if (expandSelection) {
       if (end < 0) {
-        setSelection(selectionModel.start, -selectionModel.start);
+        setSelection(selectionModel.start, 0);
       } else {
         final int nibbleCount = 2 * m_dataProvider.getDataLength();
         if (end < nibbleCount) {
-          setSelection(selectionModel.start, selectionModel.length + length);
+          setSelection(selectionModel.start, end);
         } else {
-          setSelection(selectionModel.start, nibbleCount - selectionModel.start);
+          setSelection(selectionModel.start, nibbleCount);
         }
       }
     } else {
       if (end < 0) {
-        setSelection(0, selectionModel.length);
+        setSelection(0, selectionModel.start + selectionModel.length);
       } else {
         final int nibbleCount = 2 * m_dataProvider.getDataLength();
         if (end < nibbleCount) {
-          setSelection(end, selectionModel.length);
+          setSelection(end, selectionModel.start + selectionModel.length);
         } else {
-          setSelection(nibbleCount, selectionModel.length);
+          setSelection(nibbleCount, selectionModel.start + selectionModel.length);
         }
       }
-      setSelection(selectionModel.start, 0);
+      setSelection(selectionModel.start, selectionModel.start);
     }
 
     final long newPosition = selectionModel.start + selectionModel.length;
@@ -3330,7 +3330,8 @@ public final class JHexView extends JComponent
     fireHexListener(selectionModel.start, selectionModel.length);
   }
   @Deprecated
-  private void setSelection(long start, long length) {
+  private void setSelection(long start, long end) {
+    final long length = end - start;
     final boolean hasChanges = selectionModel.start  != start
                             || selectionModel.length != length;
     selectionModel.start  = start;
@@ -3671,7 +3672,7 @@ public final class JHexView extends JComponent
 
       if (isKeyStroke(KeyEvent.VK_A, ctrl)) {
         // "Select all" action
-        setSelection(m_baseAddress, 2 * m_dataProvider.getDataLength());
+        setSelection(m_baseAddress, m_baseAddress + 2 * m_dataProvider.getDataLength());
       } else if (isKeyStroke(KeyEvent.VK_V, ctrl)) {
         // "Paste" action
         TransferHandler.getPasteAction().actionPerformed(event);
@@ -3709,7 +3710,7 @@ public final class JHexView extends JComponent
 
       if (m_activeView == Views.HEX_VIEW) {
         m_activeView = Views.ASCII_VIEW;
-        setSelection(selectionModel.start - selectionModel.start % 2, selectionModel.length);
+        setSelection(selectionModel.start - selectionModel.start % 2, selectionModel.start + selectionModel.length);
       }
       else {
         m_activeView = Views.HEX_VIEW;
@@ -4117,22 +4118,21 @@ public final class JHexView extends JComponent
             return;
           }
 
-          setSelection(selectionModel.start, selectionModel.length - 2 * m_bytesPerRow);
-        }
-        else if (y >= m_rowHeight * getNumberOfVisibleRows()) {
+          setSelection(selectionModel.start, selectionModel.start + selectionModel.length - 2 * m_bytesPerRow);
+        } else
+        if (y >= m_rowHeight * getNumberOfVisibleRows()) {
           scrollToPosition(2 * getFirstVisibleByte() + 2 * m_bytesPerRow);
 
           if (selectionModel.length + 2 * m_bytesPerRow > 2 * (m_dataProvider.getDataLength() - selectionModel.start)) {
             return;
           }
 
-          setSelection(selectionModel.start, selectionModel.length + 2 * m_bytesPerRow);
-        }
-        else {
+          setSelection(selectionModel.start, selectionModel.start + selectionModel.length + 2 * m_bytesPerRow);
+        } else {
           final int position = getNibbleAtCoordinate(x, y);
 
           if (position != -1) {
-            setSelection(selectionModel.start, position - selectionModel.start);
+            setSelection(selectionModel.start, position);
             repaint();
           }
         }
