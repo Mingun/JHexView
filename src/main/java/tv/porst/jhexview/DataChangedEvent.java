@@ -1,6 +1,5 @@
-/*
- * Added Oct. 2014 by argent77
- */
+// See LICENSE.md for license information
+
 package tv.porst.jhexview;
 
 import java.util.EventObject;
@@ -8,6 +7,8 @@ import java.util.EventObject;
 /**
  * A basic event implementation that indicates that the content of a IDataProvider object
  * has been modified.
+ *
+ * @author argent77
  */
 public class DataChangedEvent extends EventObject
 {

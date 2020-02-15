@@ -1,8 +1,12 @@
+// See LICENSE.md for license information
+
 package tv.porst.jhexview;
 
 /**
  * Interface to be implemented by classes that want to be notified about changed
  * in the caret.
+ *
+ * @author Sebastian Porst (sp@porst.tv)
  */
 public interface ICaretListener
 {

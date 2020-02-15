@@ -1,5 +1,4 @@
-// splib by Sebastian Porst (sp@porst.tv)
-// Modified by argent77
+// See LICENSE.md for license information
 
 package tv.porst.jhexview;
 
@@ -17,6 +16,8 @@ import javax.swing.Timer;
 
 /**
  * Caret class that can be used to draw carets in custom GUI components.
+ *
+ * @author Sebastian Porst (sp@porst.tv)
  */
 public class JCaret
 {

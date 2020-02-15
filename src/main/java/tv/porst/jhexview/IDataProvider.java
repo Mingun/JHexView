@@ -1,8 +1,5 @@
-/*
- * Modified Oct. 2014 by argent77
- * - added JavaDoc comments
- * - removed prototype: byte[] getData()
- */
+// See LICENSE.md for license information
+
 package tv.porst.jhexview;
 
 public interface IDataProvider

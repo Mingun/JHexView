@@ -1,3 +1,5 @@
+// See LICENSE.md for license information
+
 package tv.porst.jhexview;
 
 import javax.swing.JPopupMenu;

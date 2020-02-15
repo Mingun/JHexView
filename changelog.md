@@ -1,5 +1,9 @@
 v2.0
 ====
+Major Changes
+-------------
+Project license changed to LGPL 2.1 or later
+
 Breaking Changes
 ----------------
 - Remove unused parts of embedded splib library and move used parts into `tv.porst.jhexview` package

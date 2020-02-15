@@ -1,7 +1,5 @@
-/*
- * Modified Oct. 2014 by argent77
- * - replaced first argument from byte array to byte
- */
+// See LICENSE.md for license information
+
 package tv.porst.jhexview;
 
 import java.awt.Color;

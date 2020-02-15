@@ -1,8 +1,4 @@
-JHexView component by Sebastian Porst (sp@porst.tv), modified by Argent77
-
-Official website: https://github.com/sporst/JHexView
-JHexView for Near Infinity: https://github.com/NearInfinityBrowser/JHexView
-License: GPL 2.0
+JHexView component by Sebastian Porst (sp@porst.tv), modified by Argent77 and Mingun
 
 JHexView is a Java component for displaying binary data in Java applications
 like hex editors or memory inspectors.
@@ -24,3 +20,14 @@ Features
 - Can work with loaded data or data that must be dynamically loaded from an
   external source
 - Full control over the display colors
+
+History
+-------
+- Originally developed by Sebastian Porst (sp@porst.tv): https://github.com/sporst/JHexView
+- Modified by Argent77 for Near Infinity: https://github.com/NearInfinityBrowser/JHexView
+- License changed to LGPL 2.1 or later by Mingun
+  Currenly maintained at https://github.com/Mingun/JHexView
+
+License
+-------
+LGPL 2.1, or (at your option) any later version.

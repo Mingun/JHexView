@@ -1,10 +1,5 @@
-/*
- * Modified Oct. 2014 by argent77
- * - updated to be compatible with IDataProvider interface
- *
- * Modified Jan. 2016 by argent77
- * - added full IDataChangedListener support
- */
+// See LICENSE.md for license information
+
 package tv.porst.jhexview;
 
 import java.util.ArrayList;

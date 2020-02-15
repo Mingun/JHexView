@@ -1,7 +1,5 @@
-/*
- * Modified Oct. 2014 by argent77
- * - added single argument to dataChanged() prototype
- */
+// See LICENSE.md for license information
+
 package tv.porst.jhexview;
 
 import java.util.EventListener;

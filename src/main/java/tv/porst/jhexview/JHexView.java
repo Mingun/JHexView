@@ -1,13 +1,5 @@
-/*
- * JHexView component by Sebastian Porst (sp@porst.tv)
- * Modified Oct. 2014 by argent77
- * - removed usage of separate offscreen image
- * - added header row
- * - added more color definitions
- * - changed colored block to fixed positions
- * - added support for Undo/Redo, Copy/Paste, Find bytes/text
- * - added visual feedback for modified data
- */
+// See LICENSE.md for license information
+
 package tv.porst.jhexview;
 
 import java.awt.BasicStroke;
@@ -70,9 +62,9 @@ import javax.swing.undo.UndoableEdit;
  * The JHexView component is a Java component that can be used to display data
  * in hexadecimal format.
  *
- * @author sp
+ * @author Sebastian Porst (sp@porst.tv)
  * @author argent77
- *
+ * @author Mingun
  */
 public final class JHexView extends JComponent
 {

@@ -1,12 +1,13 @@
-/*
- * Added Oct. 2014 by argent77
- */
+// See LICENSE.md for license information
+
 package tv.porst.jhexview;
 
 import java.util.EventObject;
 
 /**
  * HexViewEvent is used to notify of changed views or selections.
+ *
+ * @author argent77
  */
 public class HexViewEvent extends EventObject
 {
