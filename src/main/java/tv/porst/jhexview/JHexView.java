@@ -2364,12 +2364,10 @@ public final class JHexView extends JComponent
       if (lastHighlightedView == Views.ASCII_VIEW) {
         // If the mouse is in the ASCII view it is necessary
         // to highlight two nibbles.
-        final int first = 2 * nibble / 2; // Don't change.
-
-        Rectangle r = getNibbleBoundsHex(first);
+        Rectangle r = getNibbleBoundsHex(nibble);
         g.fillRect((int) r.getX(), (int) r.getY(), (int) r.getWidth(), (int) r.getHeight());
 
-        r = getNibbleBoundsHex(first + 1);
+        r = getNibbleBoundsHex(nibble + 1);
         g.fillRect((int) r.getX(), (int) r.getY(), (int) r.getWidth(), (int) r.getHeight());
       }
 
