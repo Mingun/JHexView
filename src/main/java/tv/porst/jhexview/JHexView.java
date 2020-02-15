@@ -438,8 +438,6 @@ public final class JHexView extends JComponent
                                                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
   //</editor-fold>
 
-  private int m_lastHighlightedNibble;
-
   /**
    * Determines whether to draw a title header.
    */
@@ -2348,26 +2346,25 @@ public final class JHexView extends JComponent
     if (m_mouseOverHighlighted) {
       g.setColor(m_colorHighlight);
 
-      m_lastHighlightedNibble = getNibbleAtCoordinate(m_lastMouseX, m_lastMouseY);
-
-      if (m_lastHighlightedNibble == -1) {
+      final int nibble = getNibbleAtCoordinate(m_lastMouseX, m_lastMouseY);
+      if (nibble == -1) {
         return;
       }
 
       // Find out in which view the mouse currently resides.
-      final Views lastHighlightedView = m_lastMouseX >= getAsciiViewLeft() ? Views.ASCII_VIEW
+      final Views lastHighlightedView = m_lastMouseX >= getAsciiViewLeft()
+          ? Views.ASCII_VIEW
           : Views.HEX_VIEW;
 
       if (lastHighlightedView == Views.HEX_VIEW) {
         // If the mouse is in the hex view just one nibble must be highlighted.
-        final Rectangle r = getNibbleBoundsHex(m_lastHighlightedNibble);
+        final Rectangle r = getNibbleBoundsHex(nibble);
         g.fillRect((int) r.getX(), (int) r.getY(), (int) r.getWidth(), (int) r.getHeight());
-      }
-      else if (lastHighlightedView == Views.ASCII_VIEW) {
+      } else
+      if (lastHighlightedView == Views.ASCII_VIEW) {
         // If the mouse is in the ASCII view it is necessary
         // to highlight two nibbles.
-
-        final int first = 2 * m_lastHighlightedNibble / 2; // Don't change.
+        final int first = 2 * nibble / 2; // Don't change.
 
         Rectangle r = getNibbleBoundsHex(first);
         g.fillRect((int) r.getX(), (int) r.getY(), (int) r.getWidth(), (int) r.getHeight());
@@ -2377,7 +2374,7 @@ public final class JHexView extends JComponent
       }
 
       // Highlight the byte in the ASCII panel too.
-      final Rectangle r = getByteBoundsAscii(m_lastHighlightedNibble);
+      final Rectangle r = getByteBoundsAscii(nibble);
       g.fillRect((int) r.getX(), (int) r.getY(), (int) r.getWidth(), (int) r.getHeight());
     }
   }
