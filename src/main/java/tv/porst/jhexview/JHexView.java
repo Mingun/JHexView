@@ -66,7 +66,6 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
-import tv.porst.splib.convert.ConvertHelpers;
 import tv.porst.splib.gui.caret.ICaretListener;
 import tv.porst.splib.gui.caret.JCaret;
 
@@ -2546,8 +2545,8 @@ public final class JHexView extends JComponent
   private byte normalizeByte(byte value, boolean caseSensitive)
   {
     if (!caseSensitive) {
-      char ch = ConvertHelpers.toChar(value);
-      if (ConvertHelpers.isPrintableCharacter(ch)) {
+      final char ch = toChar(value);
+      if (isPrintableCharacter(ch)) {
         final char chLo = Character.toLowerCase(ch);
         return (byte)(chLo < 0x80 ? chLo : '?');
       }
@@ -3350,7 +3349,7 @@ public final class JHexView extends JComponent
    */
   private boolean needSkip(byte value)
   {
-    final char ch = ConvertHelpers.toChar(value);
+    final char ch = toChar(value);
     return ".,:;()?!-'/\"".indexOf(ch) >= 0 // stop-symbols
         || Character.isWhitespace(ch)       // whitespace
         || !getFont().canDisplay(ch);       // non-displayable characters
@@ -3490,6 +3489,48 @@ public final class JHexView extends JComponent
   public void selectAll()
   {
     m_SelectAllAction.actionPerformed(new ActionEvent(this, Event.ACTION_EVENT, ""));
+  }
+
+  /**
+   * Tests whether a character is a valid character of a hexadecimal string.
+   *
+   * @param c The character to test.
+   *
+   * @return True, if the character is a hex character. False, otherwise.
+   */
+  private static boolean isHexCharacter(final char c)
+  {
+    return c >= '0' && c <= '9'
+        || c >= 'a' && c <= 'f'
+        || c >= 'A' && c <= 'F';
+  }
+
+  /**
+   * Tests whether a character is a printable ASCII character.
+   *
+   * @param c The character to test.
+   *
+   * @return {@code true}, if the character is a printable ASCII character,
+   *         {@code false} otherwise.
+   */
+  private static boolean isPrintableCharacter(final char c)
+  {
+    final Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
+
+    return !Character.isISOControl(c) && c != KeyEvent.CHAR_UNDEFINED
+        && block != null && block != Character.UnicodeBlock.SPECIALS;
+  }
+
+  /**
+   * Converts the byte value into a character representation.
+   *
+   * @param b The byte value to convert.
+   *
+   * @return The character representation of the byte value.
+   */
+  private static char toChar(byte b)
+  {
+    return b >= 0 ? (char)b : '\uFFFD';
   }
 
   //<editor-fold defaultstate="collapsed" desc="Internal classes">
@@ -4080,11 +4121,11 @@ public final class JHexView extends JComponent
 
       final char ch = event.getKeyChar();
       if (m_activeView == Views.HEX_VIEW) {
-        if (m_dataProvider.isEditable() && ConvertHelpers.isHexCharacter(ch)) {
+        if (m_dataProvider.isEditable() && isHexCharacter(ch)) {
           keyPressedInHexView(ch);
         }
       } else {
-        if (m_dataProvider.isEditable() && ConvertHelpers.isPrintableCharacter(ch)) {
+        if (m_dataProvider.isEditable() && isPrintableCharacter(ch)) {
           keyPressedInAsciiView(ch);
         }
       }
