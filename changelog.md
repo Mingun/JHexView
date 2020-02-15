@@ -18,6 +18,11 @@ Breaking Changes
 - `setFontSize`. Use `setFont(getFont().deriveFont((float)getFont().getSize()))` instead
 - `setFontStyle`. Use `setFont(getFont().deriveFont(...))` instead
 - `setSelectionLength`
+- `getLastOffset`
+
+Bug fixes
+---------
+- **Select all** action now correctly set selection length if `getBaseAddress() != 0`
 
 Other Changes
 -------------

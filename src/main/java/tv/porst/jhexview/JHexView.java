@@ -1576,7 +1576,6 @@ public final class JHexView extends JComponent
    * @return The first visible offset.
    */
   public long getFirstVisibleOffset() { return getBaseAddress() + getFirstVisibleByte(); }
-  public long getLastOffset() { return getBaseAddress() + m_dataProvider.getDataLength(); }
   public int getVisibleBytes()
   {
     final int maxVisible = getMaximumVisibleBytes();
@@ -3672,7 +3671,7 @@ public final class JHexView extends JComponent
 
       if (isKeyStroke(KeyEvent.VK_A, ctrl)) {
         // "Select all" action
-        setSelection(getBaseAddress(), getLastOffset() * 2);
+        setSelection(m_baseAddress, 2 * m_dataProvider.getDataLength());
       } else if (isKeyStroke(KeyEvent.VK_V, ctrl)) {
         // "Paste" action
         TransferHandler.getPasteAction().actionPerformed(event);
