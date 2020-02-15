@@ -4105,23 +4105,22 @@ public final class JHexView extends JComponent
         final int x = event.getX();
         final int y = event.getY();
 
+        final int nibblesPerRow = 2 * m_bytesPerRow;
         if (y < m_paddingTop - (m_rowHeight - m_charHeight)) {
-          scrollToPosition(2 * getFirstVisibleByte() - 2 * m_bytesPerRow);
+          scrollToPosition(2 * getFirstVisibleByte() - nibblesPerRow);
 
-          if (selectionModel.end - selectionModel.start - 2 * m_bytesPerRow < 0) {
-            return;
+          final long newEnd = selectionModel.end - nibblesPerRow;
+          if (newEnd >= selectionModel.start) {
+            setSelection(selectionModel.start, newEnd);
           }
-
-          setSelection(selectionModel.start, selectionModel.end - 2 * m_bytesPerRow);
         } else
         if (y >= m_rowHeight * getNumberOfVisibleRows()) {
-          scrollToPosition(2 * getFirstVisibleByte() + 2 * m_bytesPerRow);
+          scrollToPosition(2 * getFirstVisibleByte() + nibblesPerRow);
 
-          if (selectionModel.end - selectionModel.start + 2 * m_bytesPerRow > 2 * (m_dataProvider.getDataLength() - selectionModel.start)) {
-            return;
+          final long newEnd = selectionModel.end + nibblesPerRow;
+          if (selectionModel.start + newEnd <= 2 * m_dataProvider.getDataLength()) {
+            setSelection(selectionModel.start, newEnd);
           }
-
-          setSelection(selectionModel.start, selectionModel.end + 2 * m_bytesPerRow);
         } else {
           final int position = getNibbleAtCoordinate(x, y);
 
