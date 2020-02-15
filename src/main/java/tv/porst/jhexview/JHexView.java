@@ -2343,31 +2343,31 @@ public final class JHexView extends JComponent
   private void drawMouseOverHighlighting(final Graphics g)
   {
     if (m_mouseOverHighlighted) {
-      g.setColor(m_colorHighlight);
-
       final int nibble = getNibbleAtCoordinate(m_lastMouseX, m_lastMouseY);
       if (nibble == -1) {
         return;
       }
+      final int relativeNibble = nibble - 2 * getFirstVisibleByte();
+      if (relativeNibble >= 0 && relativeNibble <= 2 * getMaximumVisibleBytes()) {
+        // Find out in which view the mouse currently resides.
+        final Views lastHighlightedView = m_lastMouseX >= getAsciiViewLeft()
+            ? Views.ASCII_VIEW
+            : Views.HEX_VIEW;
 
-      // Find out in which view the mouse currently resides.
-      final Views lastHighlightedView = m_lastMouseX >= getAsciiViewLeft()
-          ? Views.ASCII_VIEW
-          : Views.HEX_VIEW;
-
-      if (lastHighlightedView == Views.HEX_VIEW) {
-        // If the mouse is in the hex view just one nibble must be highlighted.
-        drawNibbleBoundsHex(g, nibble);
-      } else
-      if (lastHighlightedView == Views.ASCII_VIEW) {
-        // If the mouse is in the ASCII view it is necessary
-        // to highlight two nibbles.
-        drawNibbleBoundsHex(g, nibble);
-        drawNibbleBoundsHex(g, nibble + 1);
+        g.setColor(m_colorHighlight);
+        if (lastHighlightedView == Views.HEX_VIEW) {
+          // If the mouse is in the hex view just one nibble must be highlighted.
+          drawNibbleBoundsHex(g, relativeNibble);
+        } else
+        if (lastHighlightedView == Views.ASCII_VIEW) {
+          // If the mouse is in the ASCII view it is necessary
+          // to highlight two nibbles.
+          drawNibbleBoundsHex(g, relativeNibble);
+          drawNibbleBoundsHex(g, relativeNibble + 1);
+        }
+        // Highlight the byte in the ASCII panel too.
+        drawByteBoundsAscii(g, relativeNibble / 2);
       }
-
-      // Highlight the byte in the ASCII panel too.
-      drawByteBoundsAscii(g, nibble);
     }
   }
 
@@ -2641,13 +2641,8 @@ public final class JHexView extends JComponent
    */
   private void drawByteBoundsAscii(Graphics g, final int position)
   {
-    final int relativePosition = (position - 2 * getFirstVisibleByte()) / 2;
-    if (relativePosition < 0 || relativePosition > getMaximumVisibleBytes()) {
-      return;
-    }
-
-    final int row = relativePosition / m_bytesPerRow;
-    final int chr = relativePosition % m_bytesPerRow;
+    final int row = position / m_bytesPerRow;
+    final int chr = position % m_bytesPerRow;
 
     final int x = getAsciiViewLeft() + m_paddingAsciiLeft + chr * m_charWidth;
     final int y = m_paddingTop + getHeaderHeight() - m_charHeight + row * m_rowHeight;
@@ -2927,14 +2922,9 @@ public final class JHexView extends JComponent
    */
   private void drawNibbleBoundsHex(Graphics g, final int position)
   {
-    final int relativePosition = position - 2 * getFirstVisibleByte();
-    if (relativePosition < 0 || relativePosition > 2 * getMaximumVisibleBytes()) {
-      return;
-    }
-
-    final int row    = relativePosition / (2 * m_bytesPerRow);
-    final int column = relativePosition % (2 * m_bytesPerRow) / (2 * m_bytesPerColumn);
-    final int nibble = relativePosition % (2 * m_bytesPerRow) % (2 * m_bytesPerColumn);
+    final int row    = position / (2 * m_bytesPerRow);
+    final int column = position % (2 * m_bytesPerRow) / (2 * m_bytesPerColumn);
+    final int nibble = position % (2 * m_bytesPerRow) % (2 * m_bytesPerColumn);
 
     final int x = getHexViewLeft() + m_paddingHexLeft + column * getColumnSize() + nibble * m_charWidth;
     final int y = m_paddingTop + getHeaderHeight() - m_charHeight + row * m_rowHeight;
