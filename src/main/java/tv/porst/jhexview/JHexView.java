@@ -25,7 +25,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -339,22 +338,22 @@ public final class JHexView extends JComponent
   /**
    * Action that's executed when the user presses the left arrow key.
    */
-  private final ActionLeft m_leftAction = new ActionLeft(0);
+  private final ActionLeft m_leftAction = new ActionLeft(true);
 
   /**
    * Action that's executed when the user presses the shift+left arrow key.
    */
-  private final ActionLeft m_shiftLeftAction = new ActionLeft(InputEvent.SHIFT_DOWN_MASK);
+  private final ActionLeft m_shiftLeftAction = new ActionLeft(false);
 
   /**
    * Action that's executed when the user presses the right arrow key.
    */
-  private final ActionRight m_rightAction = new ActionRight(0);
+  private final ActionRight m_rightAction = new ActionRight(true);
 
   /**
    * Action that's executed when the user presses the shift+right arrow key.
    */
-  private final ActionRight m_shiftRightAction = new ActionRight(InputEvent.SHIFT_DOWN_MASK);
+  private final ActionRight m_shiftRightAction = new ActionRight(false);
 
   /**
    * Action that's executed when the user presses the up arrow key.
@@ -3414,18 +3413,25 @@ public final class JHexView extends JComponent
   {
     private static final long serialVersionUID = -9032577023548944503L;
 
-    private final int modifier;
+    private final boolean clearSelection;
 
-    /** @param modifier Key modifier as defined in InputEvent. */
-    public ActionLeft(int modifier)
+    /** @param clearSelection If {@code true}, then selection will be cleared before move caret. */
+    public ActionLeft(boolean clearSelection)
     {
-      this.modifier = modifier;
+      this.clearSelection = clearSelection;
     }
 
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-      if (modifier == 0 && !selectionModel.isEmpty()) {
+      if (clearSelection && !selectionModel.isEmpty()) {
+        // Move caret to the first nibble of selected block
+        // [           |]     }|___________{
+        // |    caret -'|  =>  `- caret
+        // `-selection--'         selection cleared
+        // [|           ]     }|___________{
+        // |`-- caret   |  =>  `- caret
+        // `-selection--'         selection cleared
         final long cur = m_caret.getPosition();
         // Round up selection and position to even nibbles when switch active view
         // to ASCII view. Constant ~1L clears last bit which effectively makes number even
@@ -3463,18 +3469,25 @@ public final class JHexView extends JComponent
   {
     private static final long serialVersionUID = 3857972387525998636L;
 
-    private final int modifier;
+    private final boolean clearSelection;
 
-    /** @param modifier Key modifier as defined in InputEvent. */
-    public ActionRight(int modifier)
+    /** @param clearSelection If {@code true}, then selection will be cleared before move caret. */
+    public ActionRight(boolean clearSelection)
     {
-      this.modifier = modifier;
+      this.clearSelection = clearSelection;
     }
 
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-      if (modifier == 0 && !selectionModel.isEmpty()) {
+      if (clearSelection && !selectionModel.isEmpty()) {
+        // Move caret to the last nibble of selected block
+        // [           |]     }___________|{
+        // |    caret -'|  =>     caret --'
+        // `-selection--'         selection cleared
+        // [|           ]     }___________|{
+        // |`-- caret   |  =>     caret --'
+        // `-selection--'         selection cleared
         final long cur = m_caret.getPosition();
         // Round up selection and position to even nibbles when switch active view
         // to ASCII view. Constant ~1L clears last bit which effectively makes number even
