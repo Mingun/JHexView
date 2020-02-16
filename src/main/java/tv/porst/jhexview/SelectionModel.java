@@ -2,6 +2,8 @@
 
 package tv.porst.jhexview;
 
+import java.util.Collections;
+import java.util.Iterator;
 import javax.swing.event.EventListenerList;
 
 /**
@@ -13,21 +15,83 @@ import javax.swing.event.EventListenerList;
  * offsets, {@code offset0} and {@code offset1}, that represent a closed interval,
  * i.e. the interval includes both {@code offset0} and {@code offset1}.
  *
+ * The model can be iterated to get all selected intervals. Intervals follows in
+ * increasing order, do not overlap each other and never empty.
+ *
+ * Note, that model is not thread-safe.
+ *
  * @author Mingun
  * @since 2.0
  */
-public class SelectionModel {
+public class SelectionModel implements Iterable<SelectionModel.Interval> {
 
   /**
    * Currently selected position. Note that this field is twice as large as the
    * length of data because nibbles can be selected.
    */
-  long start;
+  @Deprecated long start;
   /** End offset of selection (inclusive). */
-  long end;
+  @Deprecated long end;
 
   /** List containing listeners of all supported types. */
   private final EventListenerList listeners = new EventListenerList();
+
+  //<editor-fold defaultstate="collapsed" desc="Internal classes">
+  /**
+   * Represents continious interval of selected nibbles. Such intervals never
+   * intersects each other.
+   */
+  public class Interval {
+    /** The first selected nibble in that interval (inclusive). */
+    private final long start;
+    /** The last selected nibble in that interval (exclusive). */
+    private final long end;
+
+    Interval(long offset0, long offset1) {
+      this.start = Math.min(offset0, offset1);
+      this.end   = Math.max(offset0, offset1) + 1;// +1 because end of interval exclusive
+    }
+
+    /**
+     * Returns the offset of first selected nibble in that interval. That offset
+     * always strictly less then {@link #getEnd()}.
+     *
+     * @return The last selected nibble in that interval (exclusive)
+     */
+    public long getStart() { return start; }
+    /**
+     * Returns the offset of last selected nibble in that interval. That offset
+     * always strictly more than {@link #getStart()}.
+     *
+     * @return The last selected nibble in that interval (exclusive)
+     */
+    public long getEnd() { return end; }
+    /**
+     * Returns the count of selected nibblies in that interval. The returned value
+     * always greater than 0.
+     *
+     * @return The count of nibblies in that interval
+     */
+    public long getLength() { return end - start; }
+
+    /**
+     * Returns {@code true} if the nibble at specified offset is in inside the interval.
+     *
+     * @param offset an offset of nibble
+     *
+     * @return {@code true} if the nibble at specified offset is inside that interval,
+     *         {@code false} otherwise
+     */
+    public boolean contains(long offset) {
+      return start <= offset && offset < end;
+    }
+
+    @Override
+    public String toString() {
+      return "[0x"+Long.toHexString(start)+"; 0x"+Long.toHexString(end)+")";
+    }
+  }
+  //</editor-fold>
 
   /**
    * Returns {@code true} if no data are selected.
@@ -63,6 +127,12 @@ public class SelectionModel {
     if (hasChanges) {
       fireSelectionEvent();
     }
+  }
+
+  @Override
+  public Iterator<Interval> iterator() {
+    if (start == end) return Collections.emptyIterator();
+    return Collections.singleton(new Interval(start, end)).iterator();
   }
 
   /**

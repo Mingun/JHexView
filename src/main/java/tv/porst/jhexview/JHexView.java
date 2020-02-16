@@ -3713,29 +3713,24 @@ public final class JHexView extends JComponent
         JHexView hv = (JHexView)c;
         StringBuilder sb = new StringBuilder();
 
-        // preparing data
-        long ofs = hv.selectionModel.start / 2L;
-        int len = (int)(hv.selectionModel.end - selectionModel.start) / 2;
-        if (ofs+len > getData().getDataLength()) {
-          len = (int)(getData().getDataLength() - ofs);
-        }
-
-        // creating data
-        if (len > 0) {
-          byte[] buffer = getData().getData(ofs, len);
-          if (buffer != null && buffer.length > 0) {
-            if (hv.getActiveView() == Views.HEX_VIEW) {
-              // processing hex view
-              for (final byte b : buffer) {
-                sb.append(HEX_BYTES[b & 0xFF]).append(' ');
-              }
-              // Remove last space
-              sb.setLength(sb.length() - 1);
-            } else {
-              // processing ascii view
-              for (final byte b : buffer) {
-                sb.append(ASCII_VIEW_TABLE[b & 0xFF]);
-              }
+        if (hv.m_activeView == Views.HEX_VIEW) {
+          for (final SelectionModel.Interval r : hv.selectionModel) {
+            final byte[] buffer = m_dataProvider.getData(r.getStart(), (int) r.getLength());
+            // processing hex view
+            for (final byte b : buffer) {
+              sb.append(HEX_BYTES[b & 0xFF]).append(' ');
+            }
+          }
+          // Remove last space
+          if (sb.length() != 0) {
+            sb.setLength(sb.length() - 1);
+          }
+        } else {
+          for (final SelectionModel.Interval r : hv.selectionModel) {
+            final byte[] buffer = m_dataProvider.getData(r.getStart(), (int) r.getLength());
+            // processing ascii view
+            for (final byte b : buffer) {
+              sb.append(ASCII_VIEW_TABLE[b & 0xFF]);
             }
           }
         }
