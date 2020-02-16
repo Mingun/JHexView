@@ -2450,22 +2450,22 @@ public final class JHexView extends JComponent
    */
   private void changeBy(boolean expandSelection, final long length)
   {
-    final long pos = selectionModel.end + length;
-    final long end;
+    final long pos = m_caret.getPosition() + length;
+    final long newPos;
     if (pos < 0) {
-      end = 0;
+      newPos = 0;
     } else {
       final int nibbleCount = 2 * m_dataProvider.getDataLength();
-      end = pos < nibbleCount ? pos : nibbleCount;
+      newPos = pos < nibbleCount ? pos : nibbleCount;
     }
-    setSelection(expandSelection ? selectionModel.start : end, end);
-    m_caret.setPosition(end);
+    setSelection(expandSelection ? selectionModel.start : newPos, newPos);
+    m_caret.setPosition(newPos);
 
-    if (end < 2 * getFirstVisibleByte()) {
-      scrollToPosition(end);
+    if (newPos < 2 * getFirstVisibleByte()) {
+      scrollToPosition(newPos);
     } else
-    if (end >= 2 * (getFirstVisibleByte() + getMaximumVisibleBytes())) {
-      scrollToPosition(end + 2 * (m_bytesPerRow - getMaximumVisibleBytes()));
+    if (newPos >= 2 * (getFirstVisibleByte() + getMaximumVisibleBytes())) {
+      scrollToPosition(newPos + 2 * (m_bytesPerRow - getMaximumVisibleBytes()));
     }
 
     m_caret.setVisible(true);
@@ -3560,9 +3560,7 @@ public final class JHexView extends JComponent
       if (m_activeView == Views.HEX_VIEW) {
         m_activeView = Views.ASCII_VIEW;
         setSelection(selectionModel.start - selectionModel.start % 2, selectionModel.end);
-        m_caret.setPosition(selectionModel.end);
-      }
-      else {
+      } else {
         m_activeView = Views.HEX_VIEW;
       }
 
@@ -3965,27 +3963,25 @@ public final class JHexView extends JComponent
         if (y < m_paddingTop - (m_rowHeight - m_charHeight)) {
           scrollToPosition(2 * getFirstVisibleByte() - nibblesPerRow);
 
-          final long newEnd = selectionModel.end - nibblesPerRow;
-          if (newEnd >= selectionModel.start) {
-            setSelection(selectionModel.start, newEnd);
-            m_caret.setPosition(newEnd);
+          final long newPos = m_caret.getPosition() - nibblesPerRow;
+          if (newPos >= selectionModel.start) {
+            setSelection(selectionModel.start, newPos);
+            m_caret.setPosition(newPos);
           }
         } else
         if (y >= m_rowHeight * getNumberOfVisibleRows()) {
           scrollToPosition(2 * getFirstVisibleByte() + nibblesPerRow);
 
-          final long newEnd = selectionModel.end + nibblesPerRow;
-          if (selectionModel.start + newEnd <= 2 * m_dataProvider.getDataLength()) {
-            setSelection(selectionModel.start, newEnd);
-            m_caret.setPosition(newEnd);
+          final long newPos = m_caret.getPosition() + nibblesPerRow;
+          if (selectionModel.start + newPos <= 2 * m_dataProvider.getDataLength()) {
+            setSelection(selectionModel.start, newPos);
+            m_caret.setPosition(newPos);
           }
         } else {
-          final int position = getNibbleAtCoordinate(x, y);
-
-          if (position != -1) {
-            setSelection(selectionModel.start, position);
-            m_caret.setPosition(position);
-            repaint();
+          final long newPos = getNibbleAtCoordinate(x, y);
+          if (newPos != -1) {
+            setSelection(selectionModel.start, newPos);
+            m_caret.setPosition(newPos);
           }
         }
       }
