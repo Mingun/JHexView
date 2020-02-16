@@ -4023,7 +4023,6 @@ public final class JHexView extends JComponent
           // m_selectionLength = 0 must be notified in case the click position
           // is invalid.
           selectionModel.setSelection(selectionModel.start, selectionModel.start);
-          m_caret.setPosition(selectionModel.start);
         }
         repaint();
       }
