@@ -3778,9 +3778,6 @@ public final class JHexView extends JComponent
 
     private void keyPressedInAsciiView(char ch)
     {
-      if (selectionModel.start >= m_dataProvider.getDataLength() * 2) {
-        return;
-      }
       final long offset = getCurrentOffset();
 
       final byte[] data = m_dataProvider.getData(offset, 1);
@@ -3810,11 +3807,6 @@ public final class JHexView extends JComponent
       if (value == -1) {
         return;
       }
-
-      if (selectionModel.start >= m_dataProvider.getDataLength() * 2) {
-        return;
-      }
-
       final long offset = getCurrentOffset();
 
       final byte[] data = m_dataProvider.getData(offset, 1);
@@ -3822,11 +3814,10 @@ public final class JHexView extends JComponent
         return;
       }
 
-      final long pos = m_baseAddress + selectionModel.start;
-
       final byte oldValue = data[0];
       final byte newValue;
-      if (pos % 2 == 0) {
+      // If position is odd, edit lo nibble, otherwise - hi nibble
+      if (m_caret.getPosition() % 2 == 0) {
         newValue = (byte) (oldValue & 0x0F | value << 4);
       } else {
         newValue = (byte) (oldValue & 0xF0 | value);
