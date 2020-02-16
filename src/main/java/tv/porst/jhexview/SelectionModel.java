@@ -47,4 +47,13 @@ public class SelectionModel {
     }
     return false;
   }
+
+  @Deprecated
+  boolean setSelection(long start, long end) {
+    final boolean hasChanges = this.start != start
+                            || this.end   != end;
+    this.start = start;
+    this.end   = end;
+    return hasChanges;
+  }
 }

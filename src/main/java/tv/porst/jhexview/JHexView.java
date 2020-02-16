@@ -1617,36 +1617,6 @@ public final class JHexView extends JComponent
 
     setCurrentPosition(CHARACTERS_PER_BYTE * (offset - m_baseAddress));
   }
-
-  /**
-   * Returns the first selected offset.
-   *
-   * @return The first selected offset.
-   */
-  public long getFirstSelectedOffset()
-  {
-    return selectionModel.end >= selectionModel.start
-      ? (m_baseAddress + selectionModel.start) / 2
-      : (m_baseAddress + selectionModel.end  ) / 2;
-  }
-  /**
-   * Returns the last selected offset.
-   *
-   * @return The last selected offset.
-   */
-  public long getLastSelectedOffset()
-  {
-    // In this method it is necessary to round up. This is because
-    // half a selected byte counts as a fully selected byte.
-    if (selectionModel.end >= selectionModel.start) {
-      return (m_baseAddress + selectionModel.end) / 2
-           + (m_baseAddress + selectionModel.end) % 2;
-    }
-    return (m_baseAddress + selectionModel.start) / 2
-         + (m_baseAddress + selectionModel.start) % 2;
-  }
-
-  public long getSelectionLength() { return selectionModel.end - selectionModel.start; }
   //</editor-fold>
 
   //<editor-fold defaultstate="collapsed" desc="Shortcuts">
@@ -2657,8 +2627,9 @@ public final class JHexView extends JComponent
 
   /**
    * Notifies all registered HexListeners that the selection or cursor position has changed.
-   * @param start Start of the selection or cursor position in nibbles.
-   * @param length Selection length in nibbles.
+   *
+   * @param start Start of the selection in nibbles.
+   * @param end End of the selection or cursor position in nibbles.
    */
   private void fireHexListener(long start, long end)
   {
@@ -3286,12 +3257,7 @@ public final class JHexView extends JComponent
   }
   @Deprecated
   private void setSelection(long start, long end) {
-    final boolean hasChanges = selectionModel.start != start
-                            || selectionModel.end   != end;
-    selectionModel.start = start;
-    selectionModel.end   = end;
-
-    if (hasChanges) {
+    if (selectionModel.setSelection(start, end)) {
       fireHexListener(start, end);
       repaint();
     }

@@ -19,8 +19,11 @@ Breaking Changes
 - `getFontSize`. Use `getFont().getSize()` instead
 - `setFontSize`. Use `setFont(getFont().deriveFont((float)getFont().getSize()))` instead
 - `setFontStyle`. Use `setFont(getFont().deriveFont(...))` instead
+- `getSelectionLength`
 - `setSelectionLength`
 - `getLastOffset`
+- `getFirstSelectedOffset`
+- `getLastSelectedOffset`
 
 Bug fixes
 ---------
