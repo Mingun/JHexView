@@ -14,16 +14,17 @@ Breaking Changes
   start offset for search
 - `JCaret.draw` now requires `Graphics2D` as first parameter explicitly instead of implicitly
   (via cast in implementation)
+- Selection API reworked. See new `SelectionModel` class and `getSelectionModel` method
 
 ### Removed
 - `getFontSize`. Use `getFont().getSize()` instead
 - `setFontSize`. Use `setFont(getFont().deriveFont((float)getFont().getSize()))` instead
 - `setFontStyle`. Use `setFont(getFont().deriveFont(...))` instead
-- `getSelectionLength`
-- `setSelectionLength`
+- `getSelectionLength`. Use new `SelectionModel` API instead
+- `setSelectionLength`. Use new `SelectionModel` API instead
 - `getLastOffset`
-- `getFirstSelectedOffset`
-- `getLastSelectedOffset`
+- `getFirstSelectedOffset`. Use new `SelectionModel` API instead
+- `getLastSelectedOffset`. Use new `SelectionModel` API instead
 
 Bug fixes
 ---------

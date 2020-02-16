@@ -807,7 +807,7 @@ public final class JHexView extends JComponent
 
   /**
    * Returns whether {@link #getColorMap() a color map} is used to colorize data.
-   * This colorization doesn't affect currently {@link #setSelection selected}
+   * This colorization doesn't affect currently {@link #getSelectionModel selected}
    * byte ranges. The color map is used only if the colorized byte does not contained
    * within any explicitly defined {@link #colorize color range}.
    *
@@ -816,7 +816,7 @@ public final class JHexView extends JComponent
   public boolean isColorMapEnabled() { return m_colorMapEnabled; }
   /**
    * Specify whether to enable the currently assigned color map.
-   * This colorization doesn't affect currently {@link #setSelection selected}
+   * This colorization doesn't affect currently {@link #getSelectionModel selected}
    * byte ranges. The color map is used only if the colorized byte does not contained
    * within any explicitly defined {@link #colorize color range}.
    *
@@ -833,7 +833,7 @@ public final class JHexView extends JComponent
   }
   /**
    * Returns the currently assigned color map, if any.
-   * This colorization doesn't affect currently {@link #setSelection selected}
+   * This colorization doesn't affect currently {@link #getSelectionModel selected}
    * byte ranges. The color map is used only if the colorized byte does not contained
    * within any explicitly defined {@link #colorize color range}.
    *
@@ -842,7 +842,7 @@ public final class JHexView extends JComponent
   public IColormap getColorMap() { return m_colormap; }
   /**
    * Assigns a new color map.
-   * This colorization doesn't affect currently {@link #setSelection selected}
+   * This colorization doesn't affect currently {@link #getSelectionModel selected}
    * byte ranges. The color map is used only if the colorized byte does not contained
    * within any explicitly defined {@link #colorize color range}.
    *
@@ -857,7 +857,7 @@ public final class JHexView extends JComponent
   /**
    * Colorizes a range of bytes in special colors. To keep the default text or
    * background color, it is possible to pass null as these colors. This colorization
-   * doesn't affect currently {@link #setSelection selected} byte ranges.
+   * doesn't affect currently {@link #getSelectionModel selected} byte ranges.
    * This setting has priority under {@link #setColormap color maps}
    *
    * @param level Priority level at which specified color range must be added.
@@ -1583,6 +1583,16 @@ public final class JHexView extends JComponent
   //</editor-fold>
 
   //<editor-fold defaultstate="collapsed" desc="Selection">
+  /**
+   * Returns the model that manages selection state of the component. Use model
+   * methods {@link SelectionModel#addSelectionListener to subscribe} to selection
+   * change {@link SelectionEvent events}.
+   *
+   * @return the model that manages selection state of the component
+   *
+   * @since 2.0
+   */
+  public SelectionModel getSelectionModel() { return selectionModel; }
   /**
    * Returns the offset at the current caret position.
    *
@@ -2458,7 +2468,7 @@ public final class JHexView extends JComponent
       final int nibbleCount = 2 * m_dataProvider.getDataLength();
       newPos = pos < nibbleCount ? pos : nibbleCount;
     }
-    setSelection(expandSelection ? selectionModel.start : newPos, newPos);
+    selectionModel.setSelection(expandSelection ? selectionModel.start : newPos, newPos);
     m_caret.setPosition(newPos);
 
     if (newPos < 2 * getFirstVisibleByte()) {
@@ -2620,26 +2630,6 @@ public final class JHexView extends JComponent
       if (l[i] == IHexViewListener.class) {
         if (event == null) {
           event = new HexViewEvent(this, view);
-        }
-        ((IHexViewListener)l[i+1]).stateChanged(event);
-      }
-    }
-  }
-
-  /**
-   * Notifies all registered HexListeners that the selection or cursor position has changed.
-   *
-   * @param start Start of the selection in nibbles.
-   * @param end End of the selection or cursor position in nibbles.
-   */
-  private void fireHexListener(long start, long end)
-  {
-    HexViewEvent event = null;
-    Object[] l = m_listeners.getListenerList();
-    for (int i = l.length - 2; i >= 0; i -= 2) {
-      if (l[i] == IHexViewListener.class) {
-        if (event == null) {
-          event = new HexViewEvent(this, start, end - start);
         }
         ((IHexViewListener)l[i+1]).stateChanged(event);
       }
@@ -3134,7 +3124,7 @@ public final class JHexView extends JComponent
       scrollToPosition(newPosition);
     }
 
-    setSelection(newPosition, newPosition);
+    selectionModel.setSelection(newPosition, newPosition);
     m_caret.setPosition(newPosition);
   }
 
@@ -3256,15 +3246,8 @@ public final class JHexView extends JComponent
     }
 
     end = 2 * (end + 1);
-    setSelection(2 * start, end);
+    selectionModel.setSelection(2 * start, end);
     m_caret.setPosition(end);
-  }
-  @Deprecated
-  private void setSelection(long start, long end) {
-    if (selectionModel.setSelection(start, end)) {
-      fireHexListener(start, end);
-      repaint();
-    }
   }
   //</editor-fold>
 
@@ -3520,7 +3503,7 @@ public final class JHexView extends JComponent
         // "Select all" action
         // TODO: check addresses, +m_baseAddress is necessary?
         final long end = m_baseAddress + 2 * m_dataProvider.getDataLength();
-        setSelection(m_baseAddress, end);
+        selectionModel.setSelection(m_baseAddress, end);
         m_caret.setPosition(end);
       } else if (isKeyStroke(KeyEvent.VK_V, ctrl)) {
         // "Paste" action
@@ -3562,8 +3545,8 @@ public final class JHexView extends JComponent
         m_caret.setPosition(m_caret.getPosition() & ~1L);
         if (!selectionModel.isEmpty()) {
           // If some selection performed, selects all byte of selected nibble
-          setSelection(selectionModel.start & ~1L,
-                       selectionModel.end   & ~1L);
+          selectionModel.setSelection(selectionModel.start & ~1L,
+                                      selectionModel.end   & ~1L);
         }
       } else {
         m_activeView = Views.HEX_VIEW;
@@ -3961,7 +3944,7 @@ public final class JHexView extends JComponent
 
           final long newPos = m_caret.getPosition() - nibblesPerRow;
           if (newPos >= selectionModel.start) {
-            setSelection(selectionModel.start, newPos);
+            selectionModel.setSelection(selectionModel.start, newPos);
             m_caret.setPosition(newPos);
           }
         } else
@@ -3970,13 +3953,13 @@ public final class JHexView extends JComponent
 
           final long newPos = m_caret.getPosition() + nibblesPerRow;
           if (selectionModel.start + newPos <= 2 * m_dataProvider.getDataLength()) {
-            setSelection(selectionModel.start, newPos);
+            selectionModel.setSelection(selectionModel.start, newPos);
             m_caret.setPosition(newPos);
           }
         } else {
           final long newPos = getNibbleAtCoordinate(x, y);
           if (newPos != -1) {
-            setSelection(selectionModel.start, newPos);
+            selectionModel.setSelection(selectionModel.start, newPos);
             m_caret.setPosition(newPos);
           }
         }
@@ -4044,7 +4027,7 @@ public final class JHexView extends JComponent
         } else {
           // m_selectionLength = 0 must be notified in case the click position
           // is invalid.
-          setSelection(selectionModel.start, selectionModel.start);
+          selectionModel.setSelection(selectionModel.start, selectionModel.start);
           m_caret.setPosition(selectionModel.start);
         }
         repaint();

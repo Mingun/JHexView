@@ -2,6 +2,8 @@
 
 package tv.porst.jhexview;
 
+import javax.swing.event.EventListenerList;
+
 /**
  * This class represents the current state of the selection in {@link JHexView}
  * component. The selection is modeled as a set of intervals, each interval
@@ -12,6 +14,7 @@ package tv.porst.jhexview;
  * i.e. the interval includes both {@code offset0} and {@code offset1}.
  *
  * @author Mingun
+ * @since 2.0
  */
 public class SelectionModel {
 
@@ -22,6 +25,9 @@ public class SelectionModel {
   long start;
   /** End offset of selection (inclusive). */
   long end;
+
+  /** List containing listeners of all supported types. */
+  private final EventListenerList listeners = new EventListenerList();
 
   /**
    * Returns {@code true} if no data are selected.
@@ -49,11 +55,51 @@ public class SelectionModel {
   }
 
   @Deprecated
-  boolean setSelection(long start, long end) {
+  void setSelection(long start, long end) {
     final boolean hasChanges = this.start != start
                             || this.end   != end;
     this.start = start;
     this.end   = end;
-    return hasChanges;
+    if (hasChanges) {
+      fireSelectionEvent();
+    }
+  }
+
+  /**
+   * Add a listener to the model that's notified each time a change to the selection occurs.
+   *
+   * @param listener the listener to add. If {@code null}, NPE is thrown
+   *
+   * @throws NullPointerException If {@code listener} is {@code null}
+   * @see #removeSelectionListener
+   */
+  public void addSelectionListener(SelectionListener listener) {
+    if (listener == null) {
+      throw new NullPointerException("Selection change listener of JHexView can't be null");
+    }
+    listeners.add(SelectionListener.class, listener);
+  }
+  /**
+   * Remove a listener from the model that's notified each time a change to the
+   * selection occurs.
+   *
+   * @param listener the listener to remove. If {@code null}, method do nothing
+   *
+   * @see #addSelectionListener
+   */
+  public void removeSelectionListener(SelectionListener listener) {
+    listeners.remove(SelectionListener.class, listener);
+  }
+  /**
+   * Notifies all registered HexListeners that the selection has changed.
+   */
+  private void fireSelectionEvent() {
+    SelectionEvent event = null;
+    for (final SelectionListener l : listeners.getListeners(SelectionListener.class)) {
+      if (event == null) {
+        event = new SelectionEvent(this);
+      }
+      l.selectionChanged(event);
+    }
   }
 }
