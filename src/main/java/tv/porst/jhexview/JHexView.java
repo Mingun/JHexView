@@ -3554,12 +3554,17 @@ public final class JHexView extends JComponent
     @Override
     public void actionPerformed(final ActionEvent event)
     {
-
       // Switch between hex and ASCII view
-
       if (m_activeView == Views.HEX_VIEW) {
         m_activeView = Views.ASCII_VIEW;
-        setSelection(selectionModel.start - selectionModel.start % 2, selectionModel.end);
+        // Round up selection and position to even nibbles when switch active view
+        // to ASCII view. Constant ~1L clears last bit which effectively makes number even
+        m_caret.setPosition(m_caret.getPosition() & ~1L);
+        if (!selectionModel.isEmpty()) {
+          // If some selection performed, selects all byte of selected nibble
+          setSelection(selectionModel.start & ~1L,
+                       selectionModel.end   & ~1L);
+        }
       } else {
         m_activeView = Views.HEX_VIEW;
       }
