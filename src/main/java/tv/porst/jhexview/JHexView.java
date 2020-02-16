@@ -3220,11 +3220,11 @@ public final class JHexView extends JComponent
    *
    * @param offset Initial byte offset for selection
    */
-  private void expandSelection(int offset)
+  private void expandSelection(long offset)
   {
     // Starting from initial position, find word delimiter characters in both directions
-    int start = offset;
-    int end = offset;
+    long start = offset;
+    long end = offset;
     if (!needSkip(m_dataProvider.getData(offset, 1)[0])) {
       // find starting delimiter
       for (int i = 1; i < offset; i++) {
@@ -3235,7 +3235,7 @@ public final class JHexView extends JComponent
       }
 
       // find ending delimiter
-      final int maxLength = m_dataProvider.getDataLength() - offset;
+      final long maxLength = m_dataProvider.getDataLength() - offset;
       for (int i = 1; i < maxLength; i++) {
         if (needSkip(m_dataProvider.getData(offset+i, 1)[0])) {
           break;
@@ -3769,7 +3769,8 @@ public final class JHexView extends JComponent
       FocusListener, ICaretListener, IDataChangedListener, ComponentListener, KeyListener,
       MouseWheelListener, UndoableEditListener
   {
-    private boolean mouseButtonPressed = false;
+    /** Nibble, from what dragging started. If -1, then dragging not performed. */
+    private long startNibble = -1;
 
     private void keyPressedInAsciiView(char ch)
     {
@@ -3942,38 +3943,35 @@ public final class JHexView extends JComponent
     @Override
     public void mouseDragged(final MouseEvent event)
     {
-      if (!isEnabled()) {
+      if (!isEnabled() || startNibble < 0) {
         return;
       }
+      final int x = event.getX();
+      final int y = event.getY();
 
-      if (mouseButtonPressed) {
-        final int x = event.getX();
-        final int y = event.getY();
+      final int nibblesPerRow = 2 * m_bytesPerRow;
+      if (y < m_paddingTop - (m_rowHeight - m_charHeight)) {
+        scrollToPosition(2 * getFirstVisibleByte() - nibblesPerRow);
 
-        final int nibblesPerRow = 2 * m_bytesPerRow;
-        if (y < m_paddingTop - (m_rowHeight - m_charHeight)) {
-          scrollToPosition(2 * getFirstVisibleByte() - nibblesPerRow);
+        final long newPos = m_caret.getPosition() - nibblesPerRow;
+        if (newPos >= startNibble) {
+          selectionModel.setSelection(startNibble, newPos);
+          m_caret.setPosition(newPos);
+        }
+      } else
+      if (y >= m_rowHeight * getNumberOfVisibleRows()) {
+        scrollToPosition(2 * getFirstVisibleByte() + nibblesPerRow);
 
-          final long newPos = m_caret.getPosition() - nibblesPerRow;
-          if (newPos >= selectionModel.start) {
-            selectionModel.setSelection(selectionModel.start, newPos);
-            m_caret.setPosition(newPos);
-          }
-        } else
-        if (y >= m_rowHeight * getNumberOfVisibleRows()) {
-          scrollToPosition(2 * getFirstVisibleByte() + nibblesPerRow);
-
-          final long newPos = m_caret.getPosition() + nibblesPerRow;
-          if (selectionModel.start + newPos <= 2 * m_dataProvider.getDataLength()) {
-            selectionModel.setSelection(selectionModel.start, newPos);
-            m_caret.setPosition(newPos);
-          }
-        } else {
-          final long newPos = getNibbleAtCoordinate(x, y);
-          if (newPos != -1) {
-            selectionModel.setSelection(selectionModel.start, newPos);
-            m_caret.setPosition(newPos);
-          }
+        final long newPos = m_caret.getPosition() + nibblesPerRow;
+        if (startNibble + newPos <= 2 * m_dataProvider.getDataLength()) {
+          selectionModel.setSelection(startNibble, newPos);
+          m_caret.setPosition(newPos);
+        }
+      } else {
+        final long newPos = getNibbleAtCoordinate(x, y);
+        if (newPos != -1) {
+          selectionModel.setSelection(startNibble, newPos);
+          m_caret.setPosition(newPos);
         }
       }
     }
@@ -4005,8 +4003,6 @@ public final class JHexView extends JComponent
       }
 
       if (event.getButton() == MouseEvent.BUTTON1/* || event.getButton() == MouseEvent.BUTTON3*/) {
-        mouseButtonPressed = true;
-
         requestFocusInWindow();
 
         final int x = event.getX();
@@ -4026,20 +4022,20 @@ public final class JHexView extends JComponent
 
         m_caret.setVisible(true);
 
-        final int position = getNibbleAtCoordinate(x, y);
-        if (position != -1) {
+        startNibble = getNibbleAtCoordinate(x, y);
+        if (startNibble != -1) {
           // double click selects a whole word
           if (event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2
            && m_activeView == Views.ASCII_VIEW
           ) {
-            expandSelection(position / 2);// get byte position
+            expandSelection(startNibble / 2);// get byte position
           } else {
-            setCurrentPosition(position);
+            setCurrentPosition(startNibble);
           }
         } else {
           // m_selectionLength = 0 must be notified in case the click position
           // is invalid.
-          selectionModel.setSelectionInterval(selectionModel.start, selectionModel.start);
+          selectionModel.setSelectionInterval(startNibble, startNibble);// TODO: clear selection
         }
         repaint();
       }
@@ -4056,7 +4052,7 @@ public final class JHexView extends JComponent
         showPopupMenu(event);
       }
       if (event.getButton() == MouseEvent.BUTTON1) {
-        mouseButtonPressed = false;
+        startNibble = -1;
       }
     }
 
