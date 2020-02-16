@@ -16,5 +16,5 @@ public interface ICaretListener
    * @param caret
    *          The caret whose status changed.
    */
-  public void caretStatusChanged(JCaret caret);
+  public void caretStatusChanged(Caret caret);
 }

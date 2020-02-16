@@ -18,7 +18,7 @@ import javax.swing.Timer;
  *
  * @author Sebastian Porst (sp@porst.tv)
  */
-public class JCaret
+public class Caret
 {
   //<editor-fold defaultstate="collapsed" desc="Fields">
   /**
@@ -69,7 +69,7 @@ public class JCaret
    * Creates a new caret with a default blink period of 500ms and the default
    * caret color red.
    */
-  public JCaret()
+  public Caret()
   {
     this(DEFAULT_BLINK_TIME, DEFAULT_CARET_COLOR);
   }
@@ -83,7 +83,7 @@ public class JCaret
    * @throws NullPointerException
    *           Thrown if the color is null.
    */
-  public JCaret(final Color caretColor)
+  public Caret(final Color caretColor)
   {
     this(DEFAULT_BLINK_TIME, caretColor);
   }
@@ -98,7 +98,7 @@ public class JCaret
    * @throws IllegalArgumentException
    *           Thrown if the blink period is negative.
    */
-  public JCaret(final int blinkPeriod)
+  public Caret(final int blinkPeriod)
   {
     this(blinkPeriod, DEFAULT_CARET_COLOR);
   }
@@ -116,7 +116,7 @@ public class JCaret
    * @throws NullPointerException
    *           Thrown if the color is null.
    */
-  public JCaret(final int blinkPeriod, final Color caretColor)
+  public Caret(final int blinkPeriod, final Color caretColor)
   {
     if (blinkPeriod < 0) {
       throw new IllegalArgumentException("Error: Blink period can't be negative");
@@ -161,7 +161,7 @@ public class JCaret
   private void notifyListeners()
   {
     for (final ICaretListener listener : m_listeners) {
-      listener.caretStatusChanged(JCaret.this);
+      listener.caretStatusChanged(Caret.this);
     }
   }
 

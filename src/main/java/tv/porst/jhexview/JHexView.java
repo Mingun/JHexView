@@ -264,7 +264,7 @@ public final class JHexView extends JComponent
   /**
    * Blinking caret of the component.
    */
-  private final JCaret m_caret = new JCaret();
+  private final Caret m_caret = new Caret();
 
   /**
    * Left-padding of the hex view in pixels.
@@ -3857,7 +3857,7 @@ public final class JHexView extends JComponent
     }
 
     @Override
-    public void caretStatusChanged(final JCaret source)
+    public void caretStatusChanged(final Caret source)
     {
       repaint();
     }
