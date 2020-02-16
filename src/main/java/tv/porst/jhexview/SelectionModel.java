@@ -136,12 +136,34 @@ public class SelectionModel implements Iterable<SelectionModel.Interval> {
   }
 
   /**
+   * Changes the selection to be between {@code offset0} and {@code offset1}
+   * inclusive. {@code offset0} doesn't have to be less than or equal to
+   * {@code offset1}.
+   * <p>
+   * If this represents a change to the current selection, then each
+   * {@link SelectionListener} is notified of the change.
+   *
+   * @param offset0 one end of the interval
+   * @param offset1 other end of the interval
+   *
+   * @see #addSelectionListener
+   */
+  public void setSelectionInterval(long offset0, long offset1) {
+    setSelection(
+      Math.min(offset0, offset1),
+      Math.max(offset0, offset1)
+    );
+  }
+  //</editor-fold>
+
+  /**
    * Add a listener to the model that's notified each time a change to the selection occurs.
    *
    * @param listener the listener to add. If {@code null}, NPE is thrown
    *
    * @throws NullPointerException If {@code listener} is {@code null}
    * @see #removeSelectionListener
+   * @see #setSelectionInterval
    */
   public void addSelectionListener(SelectionListener listener) {
     if (listener == null) {

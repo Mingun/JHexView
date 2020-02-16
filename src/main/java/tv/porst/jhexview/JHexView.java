@@ -3124,7 +3124,7 @@ public final class JHexView extends JComponent
       scrollToPosition(newPosition);
     }
 
-    selectionModel.setSelection(newPosition, newPosition);
+    selectionModel.setSelectionInterval(newPosition, newPosition);
     m_caret.setPosition(newPosition);
   }
 
@@ -3246,7 +3246,7 @@ public final class JHexView extends JComponent
     }
 
     end = 2 * (end + 1);
-    selectionModel.setSelection(2 * start, end);
+    selectionModel.setSelectionInterval(2 * start, end);
     m_caret.setPosition(end);
   }
   //</editor-fold>
@@ -3427,6 +3427,8 @@ public final class JHexView extends JComponent
     {
       if (modifier == 0 && !selectionModel.isEmpty()) {
         final long cur = m_caret.getPosition();
+        // Round up selection and position to even nibbles when switch active view
+        // to ASCII view. Constant ~1L clears last bit which effectively makes number even
         final long start = Math.min(selectionModel.start, selectionModel.end) & ~1L;
         changeBy(event, start - cur);
       } else {
@@ -3474,6 +3476,8 @@ public final class JHexView extends JComponent
     {
       if (modifier == 0 && !selectionModel.isEmpty()) {
         final long cur = m_caret.getPosition();
+        // Round up selection and position to even nibbles when switch active view
+        // to ASCII view. Constant ~1L clears last bit which effectively makes number even
         final long start = (Math.max(selectionModel.start, selectionModel.end)+1) & ~1L;
         changeBy(event, start - cur);
       } else {
@@ -3503,7 +3507,7 @@ public final class JHexView extends JComponent
         // "Select all" action
         // TODO: check addresses, +m_baseAddress is necessary?
         final long end = m_baseAddress + 2 * m_dataProvider.getDataLength();
-        selectionModel.setSelection(m_baseAddress, end);
+        selectionModel.setSelectionInterval(m_baseAddress, end);
         m_caret.setPosition(end);
       } else if (isKeyStroke(KeyEvent.VK_V, ctrl)) {
         // "Paste" action
@@ -3545,8 +3549,8 @@ public final class JHexView extends JComponent
         m_caret.setPosition(m_caret.getPosition() & ~1L);
         if (!selectionModel.isEmpty()) {
           // If some selection performed, selects all byte of selected nibble
-          selectionModel.setSelection(selectionModel.start & ~1L,
-                                      selectionModel.end   & ~1L);
+          selectionModel.setSelectionInterval(selectionModel.start & ~1L,
+                                              selectionModel.end   & ~1L);
         }
       } else {
         m_activeView = Views.HEX_VIEW;
@@ -4022,7 +4026,7 @@ public final class JHexView extends JComponent
         } else {
           // m_selectionLength = 0 must be notified in case the click position
           // is invalid.
-          selectionModel.setSelection(selectionModel.start, selectionModel.start);
+          selectionModel.setSelectionInterval(selectionModel.start, selectionModel.start);
         }
         repaint();
       }
