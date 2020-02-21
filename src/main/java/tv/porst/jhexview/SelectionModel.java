@@ -41,7 +41,7 @@ public class SelectionModel implements Iterable<SelectionModel.Interval> {
    * Represents continious interval of selected nibbles. Such intervals never
    * intersects each other.
    */
-  public class Interval {
+  public static class Interval {
     /** The first selected nibble in that interval (inclusive). */
     private final long start;
     /** The last selected nibble in that interval (exclusive). */
@@ -88,7 +88,30 @@ public class SelectionModel implements Iterable<SelectionModel.Interval> {
 
     @Override
     public String toString() {
-      return "[0x"+Long.toHexString(start)+"; 0x"+Long.toHexString(end)+")";
+      return "[" + start + "; " + end + ")";
+    }
+
+    @Override
+    public int hashCode() {
+      int hash = 3;
+      hash = 19 * hash + (int) (start ^ (start >>> 32));
+      hash = 19 * hash + (int) (end   ^ (end   >>> 32));
+      return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      final Interval other = (Interval)obj;
+      if (start != other.start) {
+        return false;
+      }
+      return end == other.end;
     }
   }
   //</editor-fold>

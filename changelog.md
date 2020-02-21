@@ -1,3 +1,9 @@
+v2.1
+====
+Minor Changes
+-------------
+- Make class `SelectionModel.Interval` static and override `equals` and `hashCode`
+
 v2.0
 ====
 Major Changes
