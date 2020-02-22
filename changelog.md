@@ -1,5 +1,15 @@
 v2.1
 ====
+Bug fixes
+---------
+- Fix incorrect work with `getBaseAddress()` method. Bug influence offsets in
+  methods:
+  - `isModified(long)`
+  - `getModifiedCount`
+  - `getModifiedOffsets`
+  - `IColormap` methods
+  - `IMenuCreator.createMenu`
+
 Minor Changes
 -------------
 - Make class `SelectionModel.Interval` static and override `equals` and `hashCode`

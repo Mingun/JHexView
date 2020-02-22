@@ -855,7 +855,10 @@ public final class JHexView extends JComponent
    *
    * @param level Priority level at which specified color range must be added.
    *        Ranges with lowest level has priority
-   * @param offset The start offset of the byte range
+   * @param offset The start offset of the byte range. The meaningful values live
+   *        in range {@code [0; getData().getDataLength())}, but you can use any
+   *        positive values even outside data range. If range will grown, that
+   *        values will be used
    * @param size The number of bytes in the range
    * @param color The text color that is used to color that range
    * @param bgcolor The background color that is used to color that range
@@ -877,7 +880,10 @@ public final class JHexView extends JComponent
    * Removes special colorization from a range of bytes.
    *
    * @param level The colored range that must be disabled
-   * @param offset The start offset of the byte range
+   * @param offset The start offset of the byte range. The meaningful values live
+   *        in range {@code [0; getData().getDataLength())}, but you can use any
+   *        positive values even outside data range. If range will grown, that
+   *        values will be used
    * @param size The number of bytes in the byte range
    *
    * @throws IllegalArgumentException If {@code level} not in range {@code [0; 9]},
@@ -1051,7 +1057,7 @@ public final class JHexView extends JComponent
   /**
    * Returns whether the value at the specified offset has been modified by the user.
    *
-   * @param offset The data offset.
+   * @param offset The data offset in range {@code [0; getData().getDataLength())}.
    *
    * @return {@code true} if the data at the specified {@code offset} has been modified
    *         by the user, {@code false} otherwise.
@@ -1061,7 +1067,7 @@ public final class JHexView extends JComponent
   /**
    * Returns the number of modifications done to the data at the specified offset.
    *
-   * @param offset The offset of the modified data.
+   * @param offset The offset of the modified data in range {@code [0; getData().getDataLength())}.
    *
    * @return Number of modifications done to the data at the specified offset.
    */
@@ -1074,7 +1080,8 @@ public final class JHexView extends JComponent
   /**
    * Returns all offsets of data that has been modified by the user.
    *
-   * @return An array of offsets of modified data.
+   * @return An array of offsets of modified data. Each offset in range
+   *         {@code [0; getData().getDataLength())}
    */
   public long[] getModifiedOffsets()
   {
@@ -1105,7 +1112,8 @@ public final class JHexView extends JComponent
    * Decrements the number of modifications to the data at the specified offset
    * or removes it completely.
    *
-   * @param offset The position of data that has been modified by the user.
+   * @param offset The position of data that has been modified by the user
+   *        in range {@code [0; getData().getDataLength())}
    * @param forceRemove If {@code true}, remove the offset regardless of how many
    *        times it has been modified.
    *
@@ -1130,7 +1138,8 @@ public final class JHexView extends JComponent
    * Adds the specified offset of the modified data to the list or increment its
    * use if already existing.
    *
-   * @param offset The position of data that has been modified by the user.
+   * @param offset The position of data that has been modified by the user
+   *        in range {@code [0; getData().getDataLength())}
    *
    * @return The number of modifications done to the data at the specified offset before.
    */
@@ -1562,7 +1571,8 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns the first visible offset.
+   * Returns the first visible offset in bytes in range
+   * {@code [getBaseAddress(); getBaseAddress() + getData().getDataLength())}.
    *
    * @return The first visible offset.
    */
@@ -1570,7 +1580,7 @@ public final class JHexView extends JComponent
   public int getVisibleBytes()
   {
     final int maxVisible = getMaximumVisibleBytes();
-    final int visible = m_dataProvider.getDataLength() - getFirstVisibleByte();
+    final int visible = m_dataProvider.getDataLength() - (int)getFirstVisibleByte();
 
     return visible >= maxVisible ? maxVisible : visible;
   }
@@ -1588,7 +1598,8 @@ public final class JHexView extends JComponent
    */
   public SelectionModel getSelectionModel() { return selectionModel; }
   /**
-   * Returns the offset at the current caret position.
+   * Returns the offset at the current caret position in bytes in range
+   * {@code [getBaseAddress(); getBaseAddress() + getData().getDataLength())}.
    *
    * @return The offset at the current caret position.
    */
@@ -1606,7 +1617,8 @@ public final class JHexView extends JComponent
    * Sets the caret to a new offset. Do nothing, if {@link #getData() data provider}
    * doesn't set.
    *
-   * @param offset The new offset.
+   * @param offset The new offset in bytes in range
+   *        {@code [getBaseAddress(); getBaseAddress() + getData().getDataLength())}
    */
   public void setCurrentOffset(final long offset)
   {
@@ -1900,7 +1912,7 @@ public final class JHexView extends JComponent
 
       final int bytesToDraw = getBytesToDraw();
 
-      if (bytesToDraw != 0 && !m_dataProvider.hasData(getFirstVisibleOffset(), bytesToDraw)) {
+      if (bytesToDraw != 0 && !m_dataProvider.hasData(getFirstVisibleByte(), bytesToDraw)) {
         // At this point the component wants to draw data but the data
         // provider does not have the data yet. The hope is that the data
         // provider can reload the data. Until this happens, set the
@@ -1915,7 +1927,7 @@ public final class JHexView extends JComponent
           m_updateTimer.stop();
         }
 
-        m_updateTimer = new Timer(1000, new ActionWaitingForData(getFirstVisibleOffset(),
+        m_updateTimer = new Timer(1000, new ActionWaitingForData(getFirstVisibleByte(),
             bytesToDraw));
         m_updateTimer.setRepeats(true);
         m_updateTimer.start();
@@ -2042,11 +2054,11 @@ public final class JHexView extends JComponent
   private void drawMouseOverHighlighting(final Graphics g)
   {
     if (m_mouseOverHighlighted) {
-      final int nibble = getNibbleAtCoordinate(m_lastMouseX, m_lastMouseY);
+      final long nibble = getNibbleAtCoordinate(m_lastMouseX, m_lastMouseY);
       if (nibble == -1) {
         return;
       }
-      final int relativeNibble = nibble - 2 * getFirstVisibleByte();
+      final int relativeNibble = (int) (nibble - 2 * getFirstVisibleByte());
       if (relativeNibble >= 0 && relativeNibble <= 2 * getMaximumVisibleBytes()) {
         // Find out in which view the mouse currently resides.
         final Views lastHighlightedView = m_lastMouseX >= getAsciiViewLeft()
@@ -2141,18 +2153,17 @@ public final class JHexView extends JComponent
     byte[] data = null;
     final int bytesToDraw;
 
+    long dataOffset = getFirstVisibleByte();
     if (m_status == DefinitionStatus.DEFINED) {
       bytesToDraw = getBytesToDraw();
-      data = m_dataProvider.getData(getFirstVisibleOffset(), bytesToDraw);
+      data = m_dataProvider.getData(dataOffset, bytesToDraw);
     } else {
       bytesToDraw = getMaximumVisibleBytes();
     }
 
-    long byteOffset = getFirstVisibleOffset();
-
     // Iterate over all bytes in the data set and
     // print their hex value to the hex view.
-    for (int i = 0; i < bytesToDraw; i++, byteOffset++) {
+    for (int i = 0; i < bytesToDraw; i++, dataOffset++) {
       if (i != 0) {
         if (i % m_bytesPerRow == 0) {
           // If the end of a row was reached, reset the x-coordinate
@@ -2181,7 +2192,7 @@ public final class JHexView extends JComponent
           postSpaceX = m_columnSpacing / 2;
         }
 
-        if (selectionModel.isSelected(2 * (byteOffset - m_baseAddress))) {
+        if (selectionModel.isSelected(2 * dataOffset)) {
           g.setColor(m_selectionColor);
           g.fillRect(x - preSpaceX, y - m_charMaxAscent,
                      2 * m_charWidth + preSpaceX + postSpaceX, m_charMaxAscent + m_charMaxDescent);
@@ -2189,7 +2200,7 @@ public final class JHexView extends JComponent
           // Choose the right color for the hex view
           g.setColor(evenColumn ? m_fontColorHex1 : m_fontColorHex2);
         } else {
-          final ColoredRange range = findColoredRange(byteOffset);
+          final ColoredRange range = findColoredRange(dataOffset);
           if (range != null) {
             final Color bgColor = range.getBackgroundColor();
 
@@ -2201,11 +2212,11 @@ public final class JHexView extends JComponent
                        2 * m_charWidth + preSpaceX + postSpaceX, m_charMaxAscent + m_charMaxDescent);
             g.setColor(range.getColor());
           } else
-          if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(data[i], byteOffset)) {
-            final Color backgroundColor = m_colormap.getBackgroundColor(data[i], byteOffset);
-            final Color foregroundColor = isShowModified() && isModified(byteOffset)
+          if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(data[i], dataOffset)) {
+            final Color backgroundColor = m_colormap.getBackgroundColor(data[i], dataOffset);
+            final Color foregroundColor = isShowModified() && isModified(dataOffset)
               ? m_fontColorModified
-              : m_colormap.getForegroundColor(data[i], byteOffset);
+              : m_colormap.getForegroundColor(data[i], dataOffset);
 
             if (backgroundColor != null) {
               g.setColor(backgroundColor);
@@ -2220,7 +2231,7 @@ public final class JHexView extends JComponent
             }
           } else
           // Choose the right color for the hex view
-          if (isShowModified() && isModified(byteOffset)) {
+          if (isShowModified() && isModified(dataOffset)) {
             g.setColor(m_fontColorModified);
           } else {
             g.setColor(evenColumn ? m_fontColorHex1 : m_fontColorHex2);
@@ -2280,16 +2291,16 @@ public final class JHexView extends JComponent
     byte[] data = null;
     int bytesToDraw;
 
+    long dataOffset = getFirstVisibleByte();
+
     if (m_status == DefinitionStatus.DEFINED) {
       bytesToDraw = getBytesToDraw();
-      data = m_dataProvider.getData(getFirstVisibleOffset(), bytesToDraw);
+      data = m_dataProvider.getData(dataOffset, bytesToDraw);
     } else {
       bytesToDraw = getMaximumVisibleBytes();
     }
 
-    long currentOffset = getFirstVisibleOffset();
-
-    for (int i = 0; i < bytesToDraw; i++, currentOffset++) {
+    for (int i = 0; i < bytesToDraw; i++, dataOffset++) {
       if (i != 0 && i % m_bytesPerRow == 0) {
         // If the end of a row is reached, reset the
         // x-coordinate and increase the y-coordinate.
@@ -2301,24 +2312,19 @@ public final class JHexView extends JComponent
         final byte b = data[i];
 
         if (isEnabled()) {
-          // Fixed: Highlighting in debugger memory window is wrong in regards
-          // to the endianess selected
-          final long normalizedOffset = m_flipBytes ? (currentOffset & -m_bytesPerColumn)
-              + m_bytesPerColumn - (currentOffset % m_bytesPerColumn) - 1 : currentOffset;
-
-          if (selectionModel.isSelected(2 * (normalizedOffset - m_baseAddress))) {
+          if (selectionModel.isSelected(2 * dataOffset)) {
             g.setColor(m_selectionColor);
             g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
 
             // Choose the right color for the ASCII view
-            if (isShowModified() && isModified(currentOffset)) {
+            if (isShowModified() && isModified(dataOffset)) {
               g.setColor(m_fontColorModified);
             } else {
               g.setColor(m_fontColorAscii);
             }
           } else {
-            final ColoredRange range = findColoredRange(currentOffset);
-            if (range != null && currentOffset + bytesToDraw >= range.getStart()) {
+            final ColoredRange range = findColoredRange(dataOffset);
+            if (range != null && dataOffset + bytesToDraw >= range.getStart()) {
               final Color bgColor = range.getBackgroundColor();
 
               if (bgColor != null) {
@@ -2328,11 +2334,11 @@ public final class JHexView extends JComponent
               g.fillRect(x, y - m_charMaxAscent, m_charWidth, m_charMaxAscent + m_charMaxDescent);
               g.setColor(range.getColor());
             } else
-            if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(b, currentOffset)) {
-              final Color backgroundColor = m_colormap.getBackgroundColor(b, currentOffset);
-              final Color foregroundColor = isShowModified() && isModified(currentOffset)
+            if (m_colorMapEnabled && m_colormap != null && m_colormap.colorize(b, dataOffset)) {
+              final Color backgroundColor = m_colormap.getBackgroundColor(b, dataOffset);
+              final Color foregroundColor = isShowModified() && isModified(dataOffset)
                 ? m_fontColorModified
-                : m_colormap.getForegroundColor(b, currentOffset);
+                : m_colormap.getForegroundColor(b, dataOffset);
 
               if (backgroundColor != null) {
                 g.setColor(backgroundColor);
@@ -2346,7 +2352,7 @@ public final class JHexView extends JComponent
               }
             } else
             // Choose the right color for the ASCII view
-            if (isShowModified() && isModified(currentOffset)) {
+            if (isShowModified() && isModified(dataOffset)) {
               g.setColor(m_fontColorModified);
             } else {
               g.setColor(m_fontColorAscii);
@@ -2373,8 +2379,9 @@ public final class JHexView extends JComponent
    */
   private void drawCaret(final Graphics2D g)
   {
-    if (getCurrentOffset() < getFirstVisibleByte()
-     || getCurrentColumn() > getFirstVisibleByte() + getMaximumVisibleBytes()
+    final long first = getFirstVisibleByte();
+    if (m_caret.getPosition() < 2 * first
+     || getCurrentColumn() > first + getMaximumVisibleBytes()
     ) {
       return;
     }
@@ -2716,7 +2723,7 @@ public final class JHexView extends JComponent
    */
   private int getBytesToDraw()
   {
-    final int firstVisibleByte = getFirstVisibleByte();
+    final int firstVisibleByte = (int)getFirstVisibleByte();
 
     final int maxBytes = getMaximumVisibleBytes() + m_bytesPerRow;
 
@@ -2756,11 +2763,11 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns the first visible byte.
+   * Returns the offset to first visible byte.
    *
-   * @return The first visible byte.
+   * @return Offset in range in range {@code [0; getData().getDataLength())}
    */
-  private int getFirstVisibleByte()
+  private long getFirstVisibleByte()
   {
     return m_firstRow * m_bytesPerRow;
   }
@@ -2851,10 +2858,10 @@ public final class JHexView extends JComponent
    * @param x The x coordinate.
    * @param y The y coordinate.
    *
-   * @return The nibble index at the coordinates or -1 if there is no nibble at
-   *         the coordinates.
+   * @return The nibble index at the coordinates in range {@code [0; 2*getData().getDataLength())}
+   *         or -1 if there is no nibble at the coordinates.
    */
-  private int getNibbleAtCoordinate(final int x, final int y)
+  private long getNibbleAtCoordinate(final int x, final int y)
   {
     if (m_dataProvider != null && y >= m_paddingTop + getHeaderHeight() - m_font.getSize()) {
       final int left = getHexViewLeft();
@@ -2881,10 +2888,10 @@ public final class JHexView extends JComponent
    * @param x The x coordinate.
    * @param y The y coordinate.
    *
-   * @return The nibble index at the coordinates or -1 if there is no nibble at
-   *         the coordinates.
+   * @return The nibble index at the coordinates in range {@code [0; 2*getData().getDataLength())}
+   *         or -1 if there is no nibble at the coordinates.
    */
-  private int getNibbleAtCoordinatesAscii(final int x, final int y)
+  private long getNibbleAtCoordinatesAscii(final int x, final int y)
   {
     // Normalize the x coordinate to inside the ASCII view
     final int normalizedX = x - (getAsciiViewLeft() + m_paddingAsciiLeft);
@@ -2896,9 +2903,9 @@ public final class JHexView extends JComponent
     // Find the row at the coordinate
     final int row = (y - (m_paddingTop + getHeaderHeight() - m_charHeight)) / m_rowHeight;
 
-    final int byteAtPos = getFirstVisibleByte()
-                        + row * m_bytesPerRow
-                        + normalizedX / m_charWidth;
+    final long byteAtPos = getFirstVisibleByte()
+                         + row * m_bytesPerRow
+                         + normalizedX / m_charWidth;
 
     return byteAtPos >= m_dataProvider.getDataLength() ? -1 : 2 * byteAtPos;
   }
@@ -2909,10 +2916,10 @@ public final class JHexView extends JComponent
    * @param x The x coordinate.
    * @param y The y coordinate.
    *
-   * @return The nibble index at the coordinates or -1 if there is no nibble at
-   *         the coordinates.
+   * @return The nibble index at the coordinates in range {@code [0; 2*getData().getDataLength())}
+   *         or -1 if there is no nibble at the coordinates.
    */
-  private int getNibbleAtCoordinatesHex(final int x, final int y)
+  private long getNibbleAtCoordinatesHex(final int x, final int y)
   {
     // Normalize the x coordinate to inside the hex view
     final int normalizedX = x - (getHexViewLeft() + m_paddingHexLeft);
@@ -2941,10 +2948,10 @@ public final class JHexView extends JComponent
     // Find the row at the coordinate
     final int row = (y - (m_paddingTop + getHeaderHeight() - m_charHeight)) / m_rowHeight;
 
-    final int byteAtPos = getFirstVisibleByte()
-                        + row * m_bytesPerRow
-                        + column * m_bytesPerColumn;
-    final int position = 2 * byteAtPos + nibbleInColumn;
+    final long byteAtPos = getFirstVisibleByte()
+                         + row * m_bytesPerRow
+                         + column * m_bytesPerColumn;
+    final long position = 2 * byteAtPos + nibbleInColumn;
 
     return position >= 2 * m_dataProvider.getDataLength() ? -1 : position;
   }
@@ -3110,14 +3117,14 @@ public final class JHexView extends JComponent
   /**
    * Determines whether a certain position is visible in the view.
    *
-   * @param position Offset in nibbles
+   * @param position Offset in nibbles in range {@code [0; 2*getData().getDataLength())}
    *
    * @return {@code true}, if the position is visible, {@code false}, otherwise.
    */
   private boolean isPositionVisible(final long position)
   {
-    final int firstVisible = getFirstVisibleByte();
-    final int lastVisible = firstVisible + getMaximumVisibleBytes();
+    final long firstVisible = getFirstVisibleByte();
+    final long lastVisible  = firstVisible + getMaximumVisibleBytes();
 
     return position >= 2 * firstVisible && position <= 2 * lastVisible;
   }
@@ -3136,7 +3143,8 @@ public final class JHexView extends JComponent
   /**
    * Scrolls the scroll bar so that it matches the given position.
    *
-   * @param position The position to scroll to in nibbles.
+   * @param position The position to scroll to in nibbles in range
+   *        {@code [0; 2*getData().getDataLength())}
    */
   private void scrollToPosition(final long position)
   {
@@ -3147,7 +3155,8 @@ public final class JHexView extends JComponent
    * Moves the current position of the caret and notifies the listeners about
    * the position change.
    *
-   * @param newPosition The new position of the caret in nibbles.
+   * @param newPosition The new position of the caret in nibbles in range
+   *        {@code [0; 2*getData().getDataLength())}
    */
   private void setCurrentPosition(final long newPosition)
   {
@@ -3250,7 +3259,8 @@ public final class JHexView extends JComponent
    * not-whitespace, not-special ({@code .,:;()?!-'/"}) symbols and symbols,
    * that {@link #getFont currect font} can display.
    *
-   * @param offset Initial byte offset for selection
+   * @param offset Initial byte offset for selection in range
+   *        {@code [0; getData().getDataLength())}
    */
   private void expandSelection(long offset)
   {
@@ -3550,9 +3560,8 @@ public final class JHexView extends JComponent
 
       if (isKeyStroke(KeyEvent.VK_A, ctrl)) {
         // "Select all" action
-        // TODO: check addresses, +m_baseAddress is necessary?
-        final long end = m_baseAddress + 2 * m_dataProvider.getDataLength();
-        selectionModel.setSelectionInterval(m_baseAddress, end);
+        final long end = 2 * m_dataProvider.getDataLength();
+        selectionModel.setSelectionInterval(0, end);
         m_caret.setPosition(end);
       } else if (isKeyStroke(KeyEvent.VK_V, ctrl)) {
         // "Paste" action
@@ -3622,6 +3631,7 @@ public final class JHexView extends JComponent
   {
     private static final long serialVersionUID = -610823391617272365L;
 
+    /** Offset in range {@code [0; getData().getDataLength())}. */
     private final long m_offset;
 
     private final int m_size;
@@ -3651,6 +3661,7 @@ public final class JHexView extends JComponent
   /** Represents the undoable edit for a single byte or character. */
   public class DataEdit extends AbstractEdit
   {
+    /** Offset of changed data in range {@code [0; getData().getDataLength())}. */
     private final long offset;
     private final byte oldValue, newValue;
     private final Views view;
@@ -3672,7 +3683,7 @@ public final class JHexView extends JComponent
         setActiveView(view);
         getData().setData(offset, new byte[]{oldValue});
         clearModified(offset, false);
-        setCurrentOffset(offset);
+        setCurrentPosition(2 * offset);
       } else {
         throw new CannotUndoException();
       }
@@ -3686,7 +3697,7 @@ public final class JHexView extends JComponent
         setActiveView(view);
         getData().setData(offset, new byte[]{newValue});
         setModified(offset);
-        setCurrentOffset(offset + 1);
+        setCurrentPosition(2 * offset + 2);
       } else {
         throw new CannotRedoException();
       }
@@ -3722,7 +3733,7 @@ public final class JHexView extends JComponent
         try {
           final String data = (String)support.getTransferable().getTransferData(DataFlavor.stringFlavor);
           if (data != null && !support.isDrop()) {
-            if (hv.getCurrentOffset() < getData().getDataLength()) {
+            if (hv.m_caret.getPosition() < 2 * getData().getDataLength()) {
               if (hv.getActiveView() == Views.HEX_VIEW) {
                 // processing hex view
                 KeyEvent event = new KeyEvent(hv, 0, 0, 0, 0, '\0');
@@ -3805,7 +3816,7 @@ public final class JHexView extends JComponent
 
     private void keyPressedInAsciiView(char ch)
     {
-      final long offset = getCurrentOffset();
+      final long offset = m_caret.getPosition() / 2;
 
       final byte[] data = m_dataProvider.getData(offset, 1);
       if (data == null || data.length == 0) {
@@ -3834,7 +3845,7 @@ public final class JHexView extends JComponent
       if (value == -1) {
         return;
       }
-      final long offset = getCurrentOffset();
+      final long offset = m_caret.getPosition() / 2;
 
       final byte[] data = m_dataProvider.getData(offset, 1);
       if (data == null || data.length == 0) {
@@ -3866,7 +3877,7 @@ public final class JHexView extends JComponent
     private void showPopupMenu(final MouseEvent event)
     {
       if (m_menuCreator != null) {
-        final JPopupMenu menu = m_menuCreator.createMenu(getCurrentOffset());
+        final JPopupMenu menu = m_menuCreator.createMenu(m_caret.getPosition() / 2);
 
         if (menu != null) {
           menu.show(JHexView.this, event.getX(), event.getY());

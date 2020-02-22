@@ -126,7 +126,7 @@ public class SelectionModel implements Iterable<SelectionModel.Interval> {
   /**
    * Returns {@code true} if the nibble at specified offset is selected.
    *
-   * @param offset an offset of nibble
+   * @param offset an offset of nibble in range {@code [0; JHexView.getData().getDataLength())}
    *
    * @return {@code true} if the nibble at specified offset is selected,
    *         {@code false} otherwise
@@ -166,8 +166,8 @@ public class SelectionModel implements Iterable<SelectionModel.Interval> {
    * If this represents a change to the current selection, then each
    * {@link SelectionListener} is notified of the change.
    *
-   * @param offset0 one end of the interval
-   * @param offset1 other end of the interval
+   * @param offset0 one end of the interval in range {@code [0; JHexView.getData().getDataLength())}
+   * @param offset1 other end of the interval in range {@code [0; JHexView.getData().getDataLength())}
    *
    * @see #addSelectionListener
    */
