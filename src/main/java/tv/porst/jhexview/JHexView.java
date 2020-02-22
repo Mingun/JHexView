@@ -70,11 +70,6 @@ public final class JHexView extends JComponent
   private static final long serialVersionUID = -2402458562501988128L;
 
   /**
-   * Two characters are needed to display a byte in the hex window.
-   */
-  private static final int CHARACTERS_PER_BYTE = 2;
-
-  /**
    * Lookup table to convert byte values into printable strings.
    */
   private static final String[] HEX_BYTES = {
@@ -99,8 +94,6 @@ public final class JHexView extends JComponent
   private static final String[] ASCII_VIEW_TABLE;
 
   private static final int PADDING_OFFSETVIEW = 20;
-
-  private static final int NIBBLES_PER_BYTE = 2;
 
   /**
    * A stroke definition used for showing a hint box in the view that doesn't currently has
@@ -1602,8 +1595,11 @@ public final class JHexView extends JComponent
   {
     final long currentOffset = m_baseAddress + m_caret.getPosition() / 2;
 
-    return m_flipBytes ? (currentOffset & -m_bytesPerColumn) + m_bytesPerColumn
-        - (currentOffset % m_bytesPerColumn) - 1 : currentOffset;
+    if (m_flipBytes) {
+      return (currentOffset & -m_bytesPerColumn) + m_bytesPerColumn
+           - (currentOffset %  m_bytesPerColumn) - 1;
+    }
+    return currentOffset;
   }
   /**
    * Sets the caret to a new offset. Do nothing, if {@link #getData() data provider}
@@ -1625,7 +1621,7 @@ public final class JHexView extends JComponent
       );
     }
 
-    setCurrentPosition(CHARACTERS_PER_BYTE * (offset - m_baseAddress));
+    setCurrentPosition(2 * (offset - m_baseAddress));
   }
   //</editor-fold>
 
@@ -1813,19 +1809,7 @@ public final class JHexView extends JComponent
     if (m_dataProvider == null) {
       throw new IllegalStateException("No data provider active");
     }
-
-    final long realOffset = offset - m_baseAddress;
-    final long end = m_dataProvider.getDataLength();
-
-    if (realOffset < 0 || realOffset >= end) {
-      throw new IllegalArgumentException("Invalid offset 0x" + Long.toHexString(offset)
-        + ", must be in range"
-        + " [0x" + Long.toHexString(m_baseAddress)
-        + "; 0x" + Long.toHexString(m_baseAddress + end) + "]"
-      );
-    }
-
-    setCurrentPosition(2 * realOffset);
+    setCurrentOffset(offset);
   }
   //</editor-fold>
 
@@ -2694,7 +2678,7 @@ public final class JHexView extends JComponent
    */
   private int getColumnSize()
   {
-    return NIBBLES_PER_BYTE * m_bytesPerColumn * m_charWidth + m_columnSpacing;
+    return 2 * m_bytesPerColumn * m_charWidth + m_columnSpacing;
   }
 
   /**
@@ -2704,7 +2688,7 @@ public final class JHexView extends JComponent
    */
   private int getCurrentColumn()
   {
-    return (int) m_caret.getPosition() % (NIBBLES_PER_BYTE * m_bytesPerRow);
+    return (int) m_caret.getPosition() % (2 * m_bytesPerRow);
   }
 
   /**
@@ -2714,7 +2698,7 @@ public final class JHexView extends JComponent
    */
   private int getCurrentRow()
   {
-    return (int) m_caret.getPosition() / (NIBBLES_PER_BYTE * m_bytesPerRow);
+    return (int) m_caret.getPosition() / (2 * m_bytesPerRow);
   }
 
   /**
