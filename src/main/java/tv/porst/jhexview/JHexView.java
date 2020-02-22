@@ -906,6 +906,7 @@ public final class JHexView extends JComponent
    */
   public void uncolorizeAll(int level)
   {
+    // Use fictive offset and size just to check `level` inside `getColoredRange`
     getColoredRange(level, 0, 1).clear();
     repaint();
   }
@@ -1077,7 +1078,7 @@ public final class JHexView extends JComponent
    */
   public long[] getModifiedOffsets()
   {
-    long[] retVal = new long[m_modifiedOffsets.size()];
+    final long[] retVal = new long[m_modifiedOffsets.size()];
     if (!m_modifiedOffsets.isEmpty()) {
       int i = 0;
       Iterator<Long> iter = m_modifiedOffsets.keySet().iterator();
@@ -1748,15 +1749,38 @@ public final class JHexView extends JComponent
    * Attempts to find the next occurrence of keyword in the ascii view of the data,
    * starting at the specified offset.
    *
-   * @param offset The start offset for the search.
-   * @param keyword The keyword to search.
-   * @param caseSensitive Indicates whether to search case sensitive.
+   * @param offset The start offset for the search in range {@code [0; getData().getDataLength())}
+   * @param keyword The keyword to search
+   * @param caseSensitive Indicates whether to search case sensitive
    *
-   * @return The start position of the match, or -1 if no match has been found.
+   * @return The offset of the match in range {@code [0; getData().getDataLength())},
+   *         or -1 if no match has been found
    *
    * @throws NullPointerException If {@code keyword} is {@code null}
+   *
+   * @deprecated Use {@link #findAscii(long, java.lang.String, boolean)}. Will be removed in 3.0
    */
+  @Deprecated
   public int findAscii(int offset, String keyword, boolean caseSensitive)
+  {
+    return (int)findAscii((long)offset, keyword, caseSensitive);
+  }
+  /**
+   * Attempts to find the next occurrence of keyword in the ascii view of the data,
+   * starting at the specified offset.
+   *
+   * @param offset The start offset for the search in range {@code [0; getData().getDataLength())}
+   * @param keyword The keyword to search
+   * @param caseSensitive Indicates whether to search case sensitive
+   *
+   * @return The offset of the match in range {@code [0; getData().getDataLength())},
+   *         or -1 if no match has been found
+   *
+   * @throws NullPointerException If {@code keyword} is {@code null}
+   *
+   * @since 2.1
+   */
+  public long findAscii(long offset, String keyword, boolean caseSensitive)
   {
     if (getDefinitionStatus() == DefinitionStatus.DEFINED) {
       if (keyword == null) {
@@ -1768,7 +1792,7 @@ public final class JHexView extends JComponent
         pattern[i] = (byte)(keyword.charAt(i) & 0xFF);
       }
 
-      final int len = getData().getDataLength() - offset;
+      final long len = getData().getDataLength() - offset;
       return findIndexOf(offset, len, pattern, caseSensitive);
     }
     return -1;
@@ -1778,20 +1802,42 @@ public final class JHexView extends JComponent
    * Attempts to find the next occurrence of keyword in the hex view of the data,
    * starting at the specified offset.
    *
-   * @param offset The start offset for the search.
-   * @param keyword The keyword to search.
+   * @param offset The start offset for the search in range {@code [0; getData().getDataLength())}
+   * @param keyword The keyword to search
    *
-   * @return The start position of the match, or -1 if no match has been found.
+   * @return The offset of the match in range {@code [0; getData().getDataLength())},
+   *         or -1 if no match has been found
    *
    * @throws NullPointerException If {@code keyword} is {@code null}
+   *
+   * @deprecated Use {@link #findHex(long, byte[])}. Will be removed in 3.0
    */
+  @Deprecated
   public int findHex(int offset, byte[] keyword)
+  {
+    return (int)findHex((long)offset, keyword);
+  }
+  /**
+   * Attempts to find the next occurrence of keyword in the hex view of the data,
+   * starting at the specified offset.
+   *
+   * @param offset The start offset for the search in range {@code [0; getData().getDataLength())}
+   * @param keyword The keyword to search
+   *
+   * @return The offset of the match in range {@code [0; getData().getDataLength())},
+   *         or -1 if no match has been found
+   *
+   * @throws NullPointerException If {@code keyword} is {@code null}
+   *
+   * @since 2.1
+   */
+  public long findHex(long offset, byte[] keyword)
   {
     if (getDefinitionStatus() == DefinitionStatus.DEFINED) {
       if (keyword == null) {
         throw new NullPointerException("Byte array for search must not be null");
       }
-      final int len = getData().getDataLength() - offset;
+      final long len = getData().getDataLength() - offset;
       return findIndexOf(offset, len, keyword, false);
     }
     return -1;
@@ -1800,10 +1846,14 @@ public final class JHexView extends JComponent
   /**
    * Scrolls to a given offset.
    *
-   * @param offset The offset to scroll to.
+   * @param offset The offset in bytes to scroll to in range
+   *        {@code [getBaseAddress(); getBaseAddress() + getData().getDataLength())}
    *
    * @throws IllegalArgumentException If the offset is out of bounds.
+   *
+   * @deprecated Use {@link #setCurrentOffset}. Will be removed in 3.0
    */
+  @Deprecated
   public void gotoOffset(final long offset)
   {
     if (m_dataProvider == null) {
@@ -2468,21 +2518,24 @@ public final class JHexView extends JComponent
    *
    * Returns the start index of the first occurrence of the specified pattern.
    * If the pattern is not found, then -1 is returned.
-   * @param startPos The position within the data to start searching.
+   *
+   * @param startPos The position within the data to start searching in range
+   *        {@code [0; getData().getDataLength())}.
    * @param length The length of the data section to search.
    * @param pattern The pattern to search.
    * @param caseSensitive Indicates whether to compare case-sensitive or not.
+   *
    * @return The start index of the first match, or -1 otherwise.
    */
-  private int findIndexOf(int startPos, int length, byte[] pattern, boolean caseSensitive)
+  private long findIndexOf(long startPos, long length, byte[] pattern, boolean caseSensitive)
   {
     if (pattern.length == 0) {
       return startPos;
     }
 
-    IDataProvider data = getData();
+    final IDataProvider data = getData();
 
-    int dataLength = data.getDataLength();
+    final int dataLength = data.getDataLength();
     if (startPos < 0) startPos = 0;
     if (length < 0) length = 0;
     if (startPos+length > dataLength) length = dataLength - startPos;
@@ -2497,16 +2550,17 @@ public final class JHexView extends JComponent
 
     int[] byteTable = findMakeByteTable(pattern);
     int[] offsetTable = findMakeOffsetTable(pattern);
-    for (int i = startPos + pattern.length - 1, j; i < startPos+length;) {
+    int j;
+    for (long off = startPos + pattern.length - 1; off < startPos+length;) {
       byte b;
       for (j = pattern.length - 1;
-           pattern[j] == (b = normalizeByte(data.getData(i, 1)[0], caseSensitive));
-           i--, j--) {
+           pattern[j] == (b = normalizeByte(data.getData(off, 1)[0], caseSensitive));
+           --off, --j) {
         if (j == 0) {
-          return i;
+          return off;
         }
       }
-      i += Math.max(offsetTable[pattern.length - 1 - j], byteTable[b & 255]);
+      off += Math.max(offsetTable[pattern.length - 1 - j], byteTable[b & 0xFF]);
     }
     return -1;
   }
@@ -3058,7 +3112,7 @@ public final class JHexView extends JComponent
    *
    * @param position Offset in nibbles
    *
-   * @return {@code true}, if the position is visible. {@code false}, otherwise.
+   * @return {@code true}, if the position is visible, {@code false}, otherwise.
    */
   private boolean isPositionVisible(final long position)
   {
@@ -3665,9 +3719,8 @@ public final class JHexView extends JComponent
     {
       if (support.getComponent() instanceof JHexView && canImport(support)) {
         JHexView hv = (JHexView)support.getComponent();
-        String data = null;
         try {
-          data = (String)support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+          final String data = (String)support.getTransferable().getTransferData(DataFlavor.stringFlavor);
           if (data != null && !support.isDrop()) {
             if (hv.getCurrentOffset() < getData().getDataLength()) {
               if (hv.getActiveView() == Views.HEX_VIEW) {

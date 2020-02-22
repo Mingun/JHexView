@@ -3,6 +3,8 @@ v2.1
 Minor Changes
 -------------
 - Make class `SelectionModel.Interval` static and override `equals` and `hashCode`
+- Add overloads for `findHex/findAscii` that accept and return `long`.
+  Old methods, that use `int`, was deprecated and will be removed in 3.0
 
 v2.0
 ====
