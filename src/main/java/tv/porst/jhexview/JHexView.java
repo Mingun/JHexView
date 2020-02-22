@@ -222,7 +222,8 @@ public final class JHexView extends JComponent
   private int m_charWidth = 8;
 
   /**
-   * Scrollbar that is used to scroll through the dataset.
+   * Scrollbar that is used to scroll through the dataset. Scrolling performed in
+   * row units, i.e. each scroll step shows new {@link #m_bytesPerRow} bytes of data.
    */
   private final JScrollBar m_scrollbar = new JScrollBar(JScrollBar.VERTICAL, 0, 1, 0, 1);
 
@@ -1813,19 +1814,15 @@ public final class JHexView extends JComponent
       throw new IllegalStateException("No data provider active");
     }
 
-    if (getCurrentOffset() == offset) {
-      if (!isPositionVisible(selectionModel.start)) {
-        scrollToPosition(selectionModel.start);
-      }
-      return;
-    }
-
     final long realOffset = offset - m_baseAddress;
     final long end = m_dataProvider.getDataLength();
 
     if (realOffset < 0 || realOffset >= end) {
-      throw new IllegalArgumentException("Invalid offset 0x" + Long.toHexString(realOffset) +
-        ", must be in range [0x0; 0x" + Long.toHexString(end) + "]");
+      throw new IllegalArgumentException("Invalid offset 0x" + Long.toHexString(offset)
+        + ", must be in range"
+        + " [0x" + Long.toHexString(m_baseAddress)
+        + "; 0x" + Long.toHexString(m_baseAddress + end) + "]"
+      );
     }
 
     setCurrentPosition(2 * realOffset);
@@ -2915,7 +2912,7 @@ public final class JHexView extends JComponent
   }
 
   /**
-   * Returns the number of visible rows.
+   * Returns the number of visible rows for current component height.
    *
    * @return The number of visible rows.
    */
@@ -3075,10 +3072,9 @@ public final class JHexView extends JComponent
   /**
    * Determines whether a certain position is visible in the view.
    *
-   * @param position
-   *          The position in question.
+   * @param position Offset in nibbles
    *
-   * @return True, if the position is visible. False, otherwise.
+   * @return {@code true}, if the position is visible. {@code false}, otherwise.
    */
   private boolean isPositionVisible(final long position)
   {
@@ -3102,8 +3098,7 @@ public final class JHexView extends JComponent
   /**
    * Scrolls the scroll bar so that it matches the given position.
    *
-   * @param position
-   *          The position to scroll to.
+   * @param position The position to scroll to in nibbles.
    */
   private void scrollToPosition(final long position)
   {
@@ -3114,8 +3109,7 @@ public final class JHexView extends JComponent
    * Moves the current position of the caret and notifies the listeners about
    * the position change.
    *
-   * @param newPosition
-   *          The new position of the caret.
+   * @param newPosition The new position of the caret in nibbles.
    */
   private void setCurrentPosition(final long newPosition)
   {
@@ -3141,19 +3135,19 @@ public final class JHexView extends JComponent
       final int visibleRows = getNumberOfVisibleRows();
 
       final int totalRows = m_dataProvider.getDataLength() / m_bytesPerRow;
+      // 2 - Count of empty rows that can be scrolled down
       int scrollRange = 2 + totalRows - visibleRows;
 
+      // If all rows visible, disable vertical scrollbar
       if (scrollRange < 0) {
         scrollRange = 0;
-        m_scrollbar.setValue(0);
         m_scrollbar.setEnabled(false);
-      }
-      else {
+      } else {
         m_scrollbar.setEnabled(true);
       }
 
       m_scrollbar.setValue(Math.min(m_scrollbar.getValue(), scrollRange));
-      m_scrollbar.setMaximum(scrollRange+visibleRows);
+      m_scrollbar.setMaximum(scrollRange + visibleRows);
       m_scrollbar.setVisibleAmount(visibleRows);
       m_scrollbar.setBlockIncrement(visibleRows);
 
