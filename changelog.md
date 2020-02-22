@@ -9,6 +9,8 @@ Bug fixes
   - `getModifiedOffsets`
   - `IColormap` methods
   - `IMenuCreator.createMenu`
+- Fix possible `ArrayIndexOutOfBoundException` in `SimpleDataProvider.setData()`
+  if `offset + data.length` is more than size of array in provider
 
 Minor Changes
 -------------

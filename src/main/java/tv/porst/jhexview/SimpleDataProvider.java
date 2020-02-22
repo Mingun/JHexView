@@ -13,7 +13,7 @@ import java.util.List;
  */
 public final class SimpleDataProvider implements IDataProvider
 {
-  private final List<IDataChangedListener> listeners = new ArrayList<IDataChangedListener>();
+  private final List<IDataChangedListener> listeners = new ArrayList<>();
   private final byte[] m_data;
 
   public SimpleDataProvider(byte[] data)
@@ -48,6 +48,12 @@ public final class SimpleDataProvider implements IDataProvider
     return this.m_data.length;
   }
 
+  /**
+   * @return Always 0
+   *
+   * @deprecated That method are never used and will be removed in 3.0
+   */
+  @Deprecated
   public long getOffset()
   {
     return 0L;
@@ -83,11 +89,12 @@ public final class SimpleDataProvider implements IDataProvider
   public void setData(long offset, byte[] data)
   {
     int length = data.length;
-    if (offset + data.length > getDataLength()) {
-      length = getDataLength() - (int)offset;
+    final int len = getDataLength() - (int)offset;
+    if (length > len) {
+      length = len;
     }
     if (length > 0) {
-      System.arraycopy(data, 0, this.m_data, (int) offset, data.length);
+      System.arraycopy(data, 0, this.m_data, (int) offset, length);
       fireDataChangedListener();
     }
   }
