@@ -3301,9 +3301,9 @@ public final class JHexView extends JComponent
       }
     }
 
-    end = 2 * (end + 1);
+    end = 2 * end + 1;
     selectionModel.setSelectionInterval(2 * start, end);
-    m_caret.setPosition(end);
+    m_caret.setPosition(end + 1);
   }
   //</editor-fold>
 
