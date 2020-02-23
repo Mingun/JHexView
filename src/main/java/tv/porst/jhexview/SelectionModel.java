@@ -90,6 +90,8 @@ public class SelectionModel implements Iterable<SelectionModel.Interval> {
      *
      * @return {@code true} if the specified interval contains the entire other
      *         interval and {@code false} otherwise
+     *
+     * @since 2.1
      */
     public boolean contains(Interval other) {
       return start <= other.start && other.end <= end;
@@ -162,6 +164,8 @@ public class SelectionModel implements Iterable<SelectionModel.Interval> {
    *
    * @return Interval which {@link Interval#contains(long)} contains} specified
    *         offset or {@code null}, if specified offset is not selected.
+   *
+   * @since 2.1
    */
   public Interval findInterval(long offset) {
     for (final Interval range : selected) {
@@ -216,6 +220,8 @@ public class SelectionModel implements Iterable<SelectionModel.Interval> {
    * @see #setSelectionInterval
    * @see #removeSelectionInterval
    * @see #clearSelection
+   *
+   * @since 2.1
    */
   public void addSelectionInterval(long offset0, long offset1) {
     addSelectionInterval(Interval.create(offset0, offset1));
@@ -331,6 +337,8 @@ public class SelectionModel implements Iterable<SelectionModel.Interval> {
    * @see #addSelectionInterval
    * @see #setSelectionInterval
    * @see #clearSelection
+   *
+   * @since 2.1
    */
   public void removeSelectionInterval(long offset0, long offset1) {
     removeSelectionInterval(Interval.create(offset0, offset1));
@@ -430,6 +438,8 @@ public class SelectionModel implements Iterable<SelectionModel.Interval> {
    * @see #addSelectionInterval
    * @see #removeSelectionInterval
    * @see #setSelectionInterval
+   *
+   * @since 2.1
    */
   public void clearSelection() {
     // Clear selection and fire event, if there was selection before

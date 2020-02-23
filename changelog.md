@@ -18,6 +18,9 @@ Minor Changes
 - Add overloads for `findHex/findAscii` that accept and return `long`.
   Old methods, that use `int`, was deprecated and will be removed in 3.0
 - Added support for multiply intervals selections
+- Select nibble/byte when clicked on it instead of clearing selection
+- Double click in HEX view selects byte
+- Triple click in HEX view selects whole row
 
 v2.0
 ====

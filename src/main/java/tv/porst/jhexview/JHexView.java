@@ -1544,6 +1544,7 @@ public final class JHexView extends JComponent
 
     setCurrentPosition(0);
     setScrollBarMaximum();
+    selectionModel.clearSelection();
     repaint();
   }
 
@@ -3179,7 +3180,6 @@ public final class JHexView extends JComponent
       scrollToPosition(newPosition);
     }
 
-    selectionModel.clearSelection();
     m_caret.setPosition(newPosition);
   }
 
@@ -4062,7 +4062,7 @@ public final class JHexView extends JComponent
         return;
       }
 
-      if (event.getButton() == MouseEvent.BUTTON1/* || event.getButton() == MouseEvent.BUTTON3*/) {
+      if (event.getButton() == MouseEvent.BUTTON1) {
         requestFocusInWindow();
 
         final int x = event.getX();
@@ -4084,12 +4084,31 @@ public final class JHexView extends JComponent
 
         startNibble = getNibbleAtCoordinate(x, y);
         if (startNibble != -1) {
-          // double click selects a whole word
-          if (event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2
-           && m_activeView == Views.ASCII_VIEW
-          ) {
-            expandSelection(startNibble / 2);// get byte position
+          if (m_activeView == Views.ASCII_VIEW) {
+            if (event.getClickCount() == 2) {
+              expandSelection(startNibble / 2);// get byte position
+            } else {
+              // Select whole byte. Round up selection and position to even nibbles.
+              // Constant ~1L clears last bit which effectively makes number even
+              final long start = startNibble & ~1L;
+              selectionModel.setSelectionInterval(start, start + 1);
+              setCurrentPosition(start);
+            }
           } else {
+            if (event.getClickCount() == 3) {
+              // Triple click select all row
+              final long nibblesPerRow = 2 * m_bytesPerRow;
+              final long start = startNibble & -nibblesPerRow;
+              selectionModel.setSelectionInterval(start, start + nibblesPerRow - 1);
+            } else
+            if (event.getClickCount() == 2) {
+              // Select whole byte. Round up selection and position to even nibbles.
+              // Constant ~1L clears last bit which effectively makes number even
+              final long start = startNibble & ~1L;
+              selectionModel.setSelectionInterval(start, start + 1);
+            } else {
+              selectionModel.setSelectionInterval(startNibble, startNibble);
+            }
             setCurrentPosition(startNibble);
           }
         } else {
