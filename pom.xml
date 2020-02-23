@@ -6,8 +6,7 @@
 
   <groupId>ru.mingun</groupId>
   <artifactId>JHexView</artifactId>
-  <!-- Version will be filled from published tag during creating release in GitHub Action -->
-  <version>${PROJECT_VERSION}</version>
+  <version>2.1</version>
   <packaging>jar</packaging>
 
   <licenses>
